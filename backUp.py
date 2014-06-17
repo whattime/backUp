@@ -589,7 +589,7 @@ def verifyNumbersAndLog(foundDict,backUpTo,backUpFrom):
 
 
         df = pd.concat([df,allInfoDf])
-        df = df[['koreanName','subjectName','subjectInitial','group','sex','age','DOB','scanDate','timeline','studyName','patientNumber',
+        df = df[['koreanName','subjectName','subjectInitial','group','sex','age','DOB','scanDate','timeline','studyname','patientNumber',
                  'T1Number','DTINumber','DKINumber','RESTNumber','REST2Number','folderName','backUpBy','note']]
         df = df.reset_index().drop('index',axis=1)
 
