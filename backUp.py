@@ -28,7 +28,7 @@ backUpFrom = '/Volumes/CCNC_MRI_backup2/' #Find subj to back up from
 #backUpFrom = '/Volumes/promise/pracDirectory/'
 backUpTo = '/Volumes/promise/CCNC_3T_MRI'
 logFileInUSB = os.path.join(backUpFrom,"log.xlsx")
-DataBaseAddress = '/Volumes/promise/CCNC_3T_MRI/database/database.xlsx'
+DataBaseAddress = '/Volumes/promise/CCNC_3T_MRI/database/database.xls'
 
 
 # In[377]:
@@ -86,7 +86,15 @@ def main():
     #--------------------------------------------------------------------------------
     # Update the database excel and log in the external hard-drive
     #================================================================================
-    df.to_excel(DataBaseAddress,'rearrangeWithId')
+
+    #df = changeencode(df,['koreanName','note'])
+    #writer = pd.ExcelWriter(DataBaseAddress)
+    #df.to_excel(DataBaseAddress,sheet_name='rearrangeWithId',engine='xlsxwriter')
+    #writer.save()
+
+    #df.to_excel(DataBaseAddress,sheet_name='rearrangeWithId',engine='xlsxwriter')
+    df.to_excel(DataBaseAddress,sheet_name='rearrangeWithId')
+
     for dirName,value in allInfo.iteritems():
         logDf = noCall(logDf,backUpFrom,dirName)
         logDf.to_excel(logFileInUSB,'Sheet1')
@@ -107,6 +115,10 @@ def noCall(logDf,backUpFrom,folderName):
     logDf = pd.concat([logDf,pd.DataFrame.from_dict({'directoryName':folderName,'backedUpBy':getpass.getuser(),'backedUpAt':time.ctime()},orient='index').T])
     return logDf
 
+def changeencode(data, cols):
+    for col in cols:
+        data[col] = data[col].str.decode('iso-8859-1').str.encode('utf-8')
+    return data
 
 def getDicomInfoAuto(firstDicomAddress):
     try:
@@ -354,7 +366,7 @@ def getSex():
 
 def getKoreanName():
     koreanName = raw_input('\tKorean name ? [ eg) 조강익 or 윤영우1 ] ')
-    return koreanName
+    return unicode(koreanName, "utf-8")
 
 def studyName():
     studyName=raw_input('\tStudy name ? [ default : enroll, eg) "PET", "meditation" ] ')
@@ -522,10 +534,6 @@ def verifyNumbersAndLog(foundDict,backUpTo,backUpFrom):
     #{subject:{'T1':['source','file number'],'DTI':['source','file number'],...},subject2:{...}}
     allInfo={}
 
-
-
-    #Load Database
-    DataBaseAddress = '/Volumes/promise/CCNC_3T_MRI/database/database.xlsx'
 
 
     if os.path.isfile(DataBaseAddress):
