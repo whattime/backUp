@@ -36,9 +36,25 @@ def styleUpdate(target):
     date_format = xlwt.XFStyle()
     date_format.num_format_str = 'yyyy-mm-dd'
 
+
+    #first count sheet format
+    sheet = wb.get_sheet(0)
+    sheet.col(0).width = 256*13
+
+    sheet.col(0).width = 256*10
+    for colNum in range(9):
+        sheet.write(0,colNum,rb.sheet_by_index(0).cell(0,colNum).value,style=headline)
+        sheet.col(colNum).width = 256*15
+        for rowNum in range(1,len(sheet.rows)):
+            sheet.write(rowNum,colNum,rb.sheet_by_index(0).cell(rowNum,colNum).value,style=plain)
+    sheet.row(0).height_mismatch = True
+    sheet.row(0).height = 256*3
+
+
+
     sheetNumber = len(rb.sheet_names())
     #loop through the sheet
-    for num in range(sheetNumber):
+    for num in range(1,sheetNumber):
         sheet = wb.get_sheet(num)
 
         #looping through columns
@@ -62,6 +78,26 @@ def updateSpreadSheet(df,target,divideBy):
 
     writer = pd.ExcelWriter(target)
 
+    #group count
+    count={}
+    for group,dataFrame in groupbyGroup:
+        followUpT1count = len(dataFrame[dataFrame.T1Number >= 208][dataFrame.timeline!='baseline'])
+        followUpDTIcount = len(dataFrame[dataFrame.DTINumber >= 65][dataFrame.timeline!='baseline'])
+        followUpDKIcount = len(dataFrame[dataFrame.DKINumber >= 151][dataFrame.timeline!='baseline'])
+        followUpRESTcount = len(dataFrame[dataFrame.RESTNumber >= 4060][dataFrame.timeline!='baseline'])
+        baselineT1count = len(dataFrame[dataFrame.T1Number >= 208][dataFrame.timeline=='baseline'])
+        baselineDTIcount = len(dataFrame[dataFrame.DTINumber >= 65][dataFrame.timeline=='baseline'])
+        baselineDKIcount = len(dataFrame[dataFrame.DKINumber >= 151][dataFrame.timeline=='baseline'])
+        baselineRESTcount = len(dataFrame[dataFrame.RESTNumber >= 4060][dataFrame.timeline=='baseline'])
+
+        count[group]=[baselineT1count, baselineDTIcount, baselineDKIcount, baselineRESTcount,
+                followUpT1count, followUpDTIcount, followUpDKIcount, followUpRESTcount]
+
+    countDf = pd.DataFrame.from_dict(count,orient='index')
+    countDf.columns = ['baseline T1','baseline DTI','baseline DKI','baseline REST',
+            'followUp T1','followUp DTI','followUp DKI','followUp REST']
+
+    countDf.to_excel(writer,'Count')
     df.sort('scanDate',ascending=False)[:20].to_excel(writer,'Recent')
 
     for group,dataFrame in groupbyGroup:
@@ -71,7 +107,7 @@ def updateSpreadSheet(df,target,divideBy):
         dataFrame.to_excel(writer,group)
 
     writer.save()
-    os.chmod(target, 666)
+
 
 
 if __name__=='__main__':

@@ -24,7 +24,7 @@ import updateSpreadSheet
 #--------------------------------------------------------------------------------
 # Initial information
 #--------------------------------------------------------------------------------
-backUpFrom = '/Volumes/CCNC_MRI_backup2/' #Find subj to back up from
+backUpFrom = '/Volumes/56/' #Find subj to back up from
 #backUpFrom = '/Volumes/promise/pracDirectory/'
 backUpTo = '/Volumes/promise/CCNC_3T_MRI'
 logFileInUSB = os.path.join(backUpFrom,"log.xlsx")
@@ -169,7 +169,7 @@ def newDirectoryGrep(backUpFrom,logDf):
     for folderName in newDirectories:
         subjFolder = os.path.join(backUpFrom,folderName)
         stat = os.stat(subjFolder)
-        created = os.stat(subjFolder).st_mtime
+        created = os.stat(subjFolder).st_ctime
         asciiTime = time.asctime( time.gmtime( created ) )
         print '''
         ------------------------------------
@@ -347,8 +347,10 @@ def getTargetLocation(subject,group,timeline,backUpTo,df):
     else:
         previousInfo = df[df.patientNumber==int(patientNumber)]
         print previousInfo[['DOB','koreanName','subjectName','folderName']]
-        if raw_input('\tDoes about contains same subject information as the current one ? [Y/N] : ').upper() == 'Y':
-            previousDir = previousInfo.folderName[0]
+        if raw_input('\tDoes above contain the same subject information as the current one ? [Y/N] : ').upper() == 'Y':
+            previousDir = previousInfo.folderName.values[0]
+
+            print previousDir
             targetDirectory=os.path.join(backUpTo,group,previousDir,timeline)
 
     return target,subjInitial,fullname,patientNumber,targetDirectory,maxNum
