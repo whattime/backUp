@@ -489,6 +489,7 @@ def executeCopy(allInfo,df,newDf):
             for modality,modalityInfo in infoList[10].iteritems():
                 #group + previousdir + follow up period(saved in the variable baseline)
                 modalityTarget=os.path.join(infoList[4],infoList[8])
+                print 'Copying {}'.format(modality)
                 os.system('mkdir -p {0}'.format(modalityTarget))
                 shutil.copytree(modalityInfo[0],os.path.join(modalityTarget,modality))
 
