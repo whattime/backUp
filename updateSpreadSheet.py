@@ -81,14 +81,16 @@ def updateSpreadSheet(df,target,divideBy):
     #group count
     count={}
     for group,dataFrame in groupbyGroup:
-        followUpT1count = len(dataFrame[dataFrame.T1Number >= 208][dataFrame.timeline!='baseline'])
-        followUpDTIcount = len(dataFrame[dataFrame.DTINumber >= 65][dataFrame.timeline!='baseline'])
-        followUpDKIcount = len(dataFrame[dataFrame.DKINumber >= 151][dataFrame.timeline!='baseline'])
-        followUpRESTcount = len(dataFrame[dataFrame.RESTNumber >= 4060][dataFrame.timeline!='baseline'])
-        baselineT1count = len(dataFrame[dataFrame.T1Number >= 208][dataFrame.timeline=='baseline'])
-        baselineDTIcount = len(dataFrame[dataFrame.DTINumber >= 65][dataFrame.timeline=='baseline'])
-        baselineDKIcount = len(dataFrame[dataFrame.DKINumber >= 151][dataFrame.timeline=='baseline'])
-        baselineRESTcount = len(dataFrame[dataFrame.RESTNumber >= 4060][dataFrame.timeline=='baseline'])
+        #followUpT1count = len(dataFrame[dataFrame.T1Number >= 208][dataFrame.timeline!='baseline'])
+        followUpT1count = len([x for x in dataFrame[dataFrame.timeline!='baseline']['T1Number'] if type(x)==int and x >= 208])
+        followUpDTIcount  = len([x for x in dataFrame[dataFrame.timeline!='baseline']['DTINumber'] if type(x)==int and x >= 65])
+        followUpDKIcount  = len([x for x in dataFrame[dataFrame.timeline!='baseline']['DKINumber'] if type(x)==int and x >= 151])
+        followUpRESTcount  = len([x for x in dataFrame[dataFrame.timeline!='baseline']['RESTNumber'] if type(x)==int and x >= 4060])
+
+        baselineT1count = len([x for x in dataFrame[dataFrame.timeline=='baseline']['T1Number'] if type(x)==int and x >= 208])
+        baselineDTIcount  = len([x for x in dataFrame[dataFrame.timeline=='baseline']['DTINumber'] if type(x)==int and x >= 65])
+        baselineDKIcount  = len([x for x in dataFrame[dataFrame.timeline=='baseline']['DKINumber'] if type(x)==int and x >= 151])
+        baselineRESTcount  = len([x for x in dataFrame[dataFrame.timeline=='baseline']['RESTNumber'] if type(x)==int and x >= 4060])
 
         count[group]=[baselineT1count, baselineDTIcount, baselineDKIcount, baselineRESTcount,
                 followUpT1count, followUpDTIcount, followUpDKIcount, followUpRESTcount]
