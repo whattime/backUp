@@ -1,4 +1,4 @@
-#!/Users/admin/anaconda/bin/python
+#!/usr/bin/python
 
 import pandas as pd
 import os

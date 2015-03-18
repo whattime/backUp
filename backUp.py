@@ -1,4 +1,4 @@
-#!/Users/admin/anaconda/bin/python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 import re
@@ -24,14 +24,16 @@ import updateSpreadSheet
 #--------------------------------------------------------------------------------
 # Initial information
 #--------------------------------------------------------------------------------
-backUpFrom = '/Volumes/56/' #Find subj to back up from
+#backUpFrom = '/Volumes/56/' #Find subj to back up from
+#backUpFrom = '/Volumes/promise/CCNC_3T_MRI/backUpTemp/'
+backUpFrom = '/Volumes/20141013'
+
 #backUpFrom = '/Volumes/promise/pracDirectory/'
 backUpTo = '/Volumes/promise/CCNC_3T_MRI'
 logFileInUSB = os.path.join(backUpFrom,"log.xlsx")
 DataBaseAddress = '/Volumes/promise/CCNC_3T_MRI/database/database.xls'
 
 
-# In[377]:
 
 def main():
 
