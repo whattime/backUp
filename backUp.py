@@ -29,9 +29,9 @@ import updateSpreadSheet
 backUpFrom = '/Volumes/20141013'
 
 #backUpFrom = '/Volumes/promise/pracDirectory/'
-backUpTo = '/Volumes/promise/CCNC_3T_MRI'
+backUpTo = '/Volumes/promise/CCNC_MRI_3T'
 logFileInUSB = os.path.join(backUpFrom,"log.xlsx")
-DataBaseAddress = '/Volumes/promise/CCNC_3T_MRI/database/database.xls'
+DataBaseAddress = '/Volumes/promise/CCNC_MRI_3T/database/database.xls'
 
 
 

@@ -10,7 +10,8 @@ from xlrd import open_workbook
 from xlutils.copy import copy
 
 def main(args):
-    sourceFile = pd.ExcelFile('/Volumes/promise/CCNC_3T_MRI/database/database.xls')
+    sourceFile = pd.ExcelFile('/Volumes/promise/CCNC_MRI_3T/database/database.xls')
+    
     sourceDf = sourceFile.parse(sourceFile.sheet_names[0])
     target = '/ccnc/MRIspreadsheet/MRI.xls'
 
