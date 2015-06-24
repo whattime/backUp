@@ -373,16 +373,16 @@ def getKoreanName():
     return unicode(koreanName, "utf-8")
 
 def studyName():
-    studyName=raw_input('\tStudy name ? [ default : enroll, eg) "PET", "meditation" ] ')
+    studyName=raw_input('\tStudy name ? [ default : enroll, eg) "PET", "meditation", "IDP" ] ')
     if studyName=='':
         studyName='enroll'
     return studyName
 
 def getGroup():
-    possibleGroups = str('BADUK,PET,CHR,DNO,EMO,FEP,GHR,NOR,OCM,ONS,OXY,PAIN,SPR,UMO').split(',')
+    possibleGroups = str('BADUK,PET,CHR,DNO,EMO,FEP,GHR,NOR,OCM,ONS,OXY,PAIN,SPR,UMO,IGD,ALC').split(',')
     subjectNameWithGroup={}
 
-    groupName=raw_input('\twhich group ? [BADUK/PET/CHR/DNO/EMO/FEP/GHR/NOR/OCM/ONS/OXY/PAIN/SPR/UMO] :')
+    groupName=raw_input('\twhich group ? [BADUK/PET/CHR/DNO/EMO/FEP/GHR/NOR/OCM/ONS/OXY/PAIN/SPR/UMO/IGD/ALC] :')
     timeline=raw_input('\tfollow up (if follow up, type the period) ? [baseline/period] :')
     groupName = groupName.upper()
 
