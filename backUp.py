@@ -379,10 +379,10 @@ def studyName():
     return studyName
 
 def getGroup():
-    possibleGroups = str('BADUK,PET,CHR,DNO,EMO,FEP,GHR,NOR,OCM,ONS,OXY,PAIN,SPR,UMO,IGD,AUD').split(',')
+    possibleGroups = str('BADUK,PET,CHR,DNO,EMO,FEP,GHR,NOR,OCM,ONS,OXY,PAIN,SPR,UMO,IGD,IGH,AUD').split(',')
     subjectNameWithGroup={}
 
-    groupName=raw_input('\twhich group ? [BADUK/PET/CHR/DNO/EMO/FEP/GHR/NOR/OCM/ONS/OXY/PAIN/SPR/UMO/IGD/AUD] :')
+    groupName=raw_input('\twhich group ? [BADUK/PET/CHR/DNO/EMO/FEP/GHR/NOR/OCM/ONS/OXY/PAIN/SPR/UMO/IGH/IGD/AUD] :')
     timeline=raw_input('\tfollow up (if follow up, type the period) ? [baseline/period] :')
     groupName = groupName.upper()
 
