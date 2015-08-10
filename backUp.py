@@ -118,17 +118,17 @@ def main():
     #                   subjInitial,fullname,subjNum,targetDirectory,
     #                   sex,allModalityWithLocation,maxNum,
     #                   backUpTo,backUpFrom,koreanName]
+    # ['NOR', 'baseline', '1988-09-16', 'ha', '/Volumes/promise/CCNC_MRI_3T/NOR', 'CKI', 'ChoKangIk', '88091612', 'NOR96_CKI', 'M', {'DTI': ['/Volumes/20141013/CHO_KANG_IK_88091612/RESEARCH_STUDY_RESEARCH_STUDY_20150807_173318_875000/DTI_64D_B1K(2)_0006', 65], 'REST': ['/Volumes/20141013/CHO_KANG_IK_88091612/RESEARCH_STUDY_RESEARCH_STUDY_20150807_173318_875000/REST_FMRI_PHASE_116_(1)_0005', 4060], 'T1': ['/Volumes/20141013/CHO_KANG_IK_88091612/RESEARCH_STUDY_RESEARCH_STUDY_20150807_173318_875000/TFL3D_208_SLAB_0004', 208], 'T2FLAIR': ['/Volumes/20141013/CHO_KANG_IK_88091612/RESEARCH_STUDY_RESEARCH_STUDY_20150807_173318_875000/AX_T2_FLAIR_P2_0003', 25], 'T2TSE': ['/Volumes/20141013/CHO_KANG_IK_88091612/RESEARCH_STUDY_RESEARCH_STUDY_20150807_173318_875000/AX_T2_TSE_P2_0002', 25], 'DKI': ['/Volumes/20141013/CHO_KANG_IK_88091612/RESEARCH_STUDY_RESEARCH_STUDY_20150807_173318_875000/DKI_30D_B-VALUE_NB_06_(3)_0010', 151]}, '96', '/Volumes/promise/CCNC_MRI_3T', '/Volumes/20141013', u'\uc870\uac15\uc775']
     #================================================================================
     print 'Now, running motion_extraction'
     for subject,infoList in allInfo.iteritems():
-        copiedDir=infoList[4]
-        motion_extraction.to_nifti(copiedDir,True)
+        copiedDir=os.path.join(infoList[4],infoList[8],infoList[1])
+        print copiedDir
+        motion_extraction.to_nifti(copiedDir,False)
         motion_extraction.to_afni_format(copiedDir)
         motion_extraction.slice_time_correction(copiedDir)
         motion_extraction.motion_correction(copiedDir)
-
-        if args.graph:
-            motion_extraction.make_graph(copiedDir)
+        motion_extraction.make_graph(copiedDir)
 
     print 'Completed\n'
 
@@ -491,8 +491,6 @@ def dicomNumberCheckInDictionary(allModalityWithLocation):
             print '{0} is new, it has {1} files in the directory'.format(
                     aModalityWithLocation[0],len(os.listdir(aModalityWithLocation[1])))
 
-
-# In[376]:
 
 def executeCopy(allInfo,df,newDf):
     #newDf --> {subject:allInfoDf}
