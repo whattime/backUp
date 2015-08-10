@@ -17,6 +17,7 @@ import collections
 import pandas as pd
 import dicom
 import updateSpreadSheet
+import motion_extraction
 
 
 # In[321]:
@@ -110,6 +111,27 @@ def main():
 
     print '-----------------'
     print 'Completed\n'
+
+    #--------------------------------------------------------------------------------
+    # link motion_extraction
+    # allInfo[subject]=[group,followUp,birthday,note,target,
+    #                   subjInitial,fullname,subjNum,targetDirectory,
+    #                   sex,allModalityWithLocation,maxNum,
+    #                   backUpTo,backUpFrom,koreanName]
+    #================================================================================
+    print 'Now, running motion_extraction'
+    for subject,infoList in allInfo.iteritems():
+        copiedDir=infoList[4]
+        motion_extraction.to_nifti(copiedDir,True)
+        motion_extraction.to_afni_format(copiedDir)
+        motion_extraction.slice_time_correction(copiedDir)
+        motion_extraction.motion_correction(copiedDir)
+
+        if args.graph:
+            motion_extraction.make_graph(copiedDir)
+
+    print 'Completed\n'
+
 
 
 
@@ -497,7 +519,6 @@ def executeCopy(allInfo,df,newDf):
 
 
 
-        #if baseline
         else:
             for modality,modalityInfo in infoList[10].iteritems():
                 # modalityInfo[0] : source
