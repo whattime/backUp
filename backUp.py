@@ -382,7 +382,7 @@ def getName(subjFolder):
         for i in subjwords:
             fullname=fullname + i[0].upper()
             fullname=fullname + i[1:]
-            subjInitial=subjInitial+i[0][0]
+            subjInitial=subjInitial+i[0][0][0]
         return subjInitial.upper(),fullname,patientNumber
 
 def maxGroupNum(backUpTo):
