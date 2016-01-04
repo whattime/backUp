@@ -28,7 +28,8 @@ import freesurfer
 #--------------------------------------------------------------------------------
 #backUpFrom = '/Volumes/56/' #Find subj to back up from
 #backUpFrom = '/Volumes/promise/CCNC_3T_MRI/backUpTemp/'
-backUpFrom = '/Volumes/20141013'
+backUpFrom = '/Volumes/20151118'
+
 
 #backUpFrom = '/Volumes/promise/pracDirectory/'
 backUpTo = '/Volumes/promise/CCNC_MRI_3T'
@@ -131,8 +132,8 @@ def main():
 
     print 'Now, running motion_extraction'
     for subject,infoList in allInfo.iteritems():
-        copiedDir=os.path.join(infoList[4],infoList[8],infoList[1])
-        print copiedDir
+        #copiedDir=os.path.join(infoList[4],infoList[8],infoList[1])
+        copiedDir=infoList[8]
         motion_extraction.to_nifti(copiedDir,False)
         motion_extraction.to_afni_format(copiedDir)
         motion_extraction.slice_time_correction(copiedDir)
@@ -160,7 +161,8 @@ def main():
         pass
     
     for subject,infoList in allInfo.iteritems():
-        copiedDir=os.path.join(infoList[4],infoList[8],infoList[1])
+        #copiedDir=os.path.join(infoList[4],infoList[8],infoList[1])
+        copiedDir=infoList[8]
         print copiedDir
         args.directory = copiedDir
         args.nifti = True
@@ -172,6 +174,8 @@ def main():
 
 
     print 'Completed\n'
+
+
 
     
 
@@ -382,7 +386,7 @@ def getName(subjFolder):
         for i in subjwords:
             fullname=fullname + i[0].upper()
             fullname=fullname + i[1:]
-            subjInitial=subjInitial+i[0][0]
+            subjInitial=subjInitial+i[0][0][0]
         return subjInitial.upper(),fullname,patientNumber
 
 def maxGroupNum(backUpTo):
@@ -416,8 +420,11 @@ def getTargetLocation(subject,group,timeline,backUpTo,df):
         print previousInfo[['DOB','koreanName','subjectName','folderName']]
         if raw_input('\tDoes above contain the same subject information as the current one ? [Y/N] : ').upper() == 'Y':
             previousDir = previousInfo.folderName.values[0]
+            print 'previousDir :', previousDir
+            print 'previousDir :', previousDir
+            print 'previousDir :', previousDir
+            print 'previousDir :', previousDir
 
-            print previousDir
             targetDirectory=os.path.join(backUpTo,group,previousDir,timeline)
 
     return target,subjInitial,fullname,patientNumber,targetDirectory,maxNum
@@ -646,19 +653,19 @@ def verifyNumbersAndLog(foundDict,backUpTo,backUpFrom):
 
         #Group, followUp(baseline,followup,CNT,PRO)
         koreanName = getKoreanName()
-        group,followUp=getGroup()
+        group,timeline=getGroup()
         birthday,note=getDOB_NOTE()
         sex=getSex()
         studyname = studyName()
 
-        target,subjInitial,fullname,subjNum,targetDirectory,maxNum=getTargetLocation(subject,group,followUp,backUpTo,df)
+        target,subjInitial,fullname,subjNum,targetDirectory,maxNum=getTargetLocation(subject,group,timeline,backUpTo,df)
         os.mkdir(os.path.join(target,targetDirectory))
 
 #        print '\n\n\n-----------------'
-#        print group,followUp,birthday,note,target,subjInitial,fullname,subjNum,targetDirectory,sex,allModalityWithLocation,maxNum,backUpTo,backUpFrom
+#        print group,timeline,birthday,note,target,subjInitial,fullname,subjNum,targetDirectory,sex,allModalityWithLocation,maxNum,backUpTo,backUpFrom
 #        print '-----------------\n\n\n'
 
-        allInfoDf = log(subject,koreanName,group,followUp,birthday,note,target,subjInitial,fullname,subjNum,studyname,targetDirectory,sex,allModalityWithLocation,maxNum,backUpTo,backUpFrom)
+        allInfoDf = log(subject,koreanName,group,timeline,birthday,note,target,subjInitial,fullname,subjNum,studyname,targetDirectory,sex,allModalityWithLocation,maxNum,backUpTo,backUpFrom)
 
         newDfList[subject]=allInfoDf
 
@@ -669,7 +676,7 @@ def verifyNumbersAndLog(foundDict,backUpTo,backUpFrom):
         df = df.reset_index().drop('index',axis=1)
 
 
-        allInfo[subject]=[group,followUp,birthday,note,target,subjInitial,fullname,subjNum,targetDirectory,sex,allModalityWithLocation,maxNum,backUpTo,backUpFrom,koreanName]
+        allInfo[subject]=[group,timeline,birthday,note,target,subjInitial,fullname,subjNum,targetDirectory,sex,allModalityWithLocation,maxNum,backUpTo,backUpFrom,koreanName]
 
     return allInfo,df,newDfList
 
