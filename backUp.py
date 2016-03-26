@@ -1,6 +1,5 @@
-#!/usr/bin/python
+#!/ccnc_bin/venv/bin/python
 # -*- coding: utf-8 -*-
-
 import re
 import time
 from datetime import date
@@ -19,6 +18,7 @@ import dicom
 import updateSpreadSheet
 import motion_extraction
 import freesurfer
+import freesurfer_summary
 
 
 # In[321]:
@@ -159,6 +159,9 @@ def main():
     #================================================================================
     class args():
         pass
+
+    class fs_args():
+        pass
     
     for subject,infoList in allInfo.iteritems():
         #copiedDir=os.path.join(infoList[4],infoList[8],infoList[1])
@@ -170,7 +173,20 @@ def main():
         args.cwd = False
         args.output = os.path.join(copiedDir,'FREESURFER')
 
-        freesurfer.main(args)
+        fs_args.subject_loc = copiedDir
+        fs_args.backgrounds = None
+        fs_args.roi_list = "ctx_lh_G_cuneus"
+        fs_args.meanDfLoc = True
+        fs_args.verbose = True
+        fs_args.brain = True
+
+        freesurfer.main(fs_args.subject_loc,
+                fs_args.backgrounds,
+                fs_args.roi_list,
+                fs_args.meanDfLoc,
+                fs_args.verbose,
+                fs_args.brain)
+
 
 
     print 'Completed\n'
