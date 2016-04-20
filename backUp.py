@@ -51,7 +51,8 @@ def main(args):
     #================================================================================
     #try:
     logDf=copiedDirectoryCheck(backUpFrom,logFileInUSB)
-    newDirectoryList,logDf=newDirectoryGrep(backUpFrom,logDf)
+    newDirectoryList,logDf=newDirectoryGrep(args.inputDirs, backUpFrom,logDf)
+    
     logDf.to_excel(logFileInUSB,'Sheet1')
     if newDirectoryList==[]:
         sys.exit()
@@ -81,7 +82,8 @@ def main(args):
     #--------------------------------------------------------------------------------
     # check the number of images in the new directories
     #================================================================================
-    executeCopy(allInfo,df,newDfList)
+    if args.executeCopy:
+        executeCopy(allInfo,df,newDfList)
     #individualLog(allInfo,df)
     #================================================================================
 
@@ -96,21 +98,25 @@ def main(args):
     #writer.save()
 
     #df.to_excel(DataBaseAddress,sheet_name='rearrangeWithId',engine='xlsxwriter')
-    df.to_excel(DataBaseAddress,sheet_name='rearrangeWithId')
+    if args.executeCopy:
+        df.to_excel(DataBaseAddress,sheet_name='rearrangeWithId')
 
-    for dirName,value in allInfo.iteritems():
-        logDf = noCall(logDf,backUpFrom,dirName)
-        logDf.to_excel(logFileInUSB,'Sheet1')
+        for dirName,value in allInfo.iteritems():
+            logDf = noCall(logDf,backUpFrom,dirName)
+            logDf.to_excel(logFileInUSB,'Sheet1')
     #================================================================================
 
 
     #--------------------------------------------------------------------------------
     # Update the database excel for CCNC
     #================================================================================
-    updateSpreadSheet.main('noInput')
+    if args.executeCopy:
+        updateSpreadSheet.main('noInput')
 
     print '-----------------'
     print 'Completed\n'
+
+    print allInfo
 
     #--------------------------------------------------------------------------------
     # link motion_extraction
@@ -128,17 +134,18 @@ def main(args):
     # '/Volumes/20141013', u'\uc870\uac15\uc775']
     #================================================================================
 
-    print 'Now, running motion_extraction'
-    for subject,infoList in allInfo.iteritems():
-        #copiedDir=os.path.join(infoList[4],infoList[8],infoList[1])
-        copiedDir=infoList[8]
-        motion_extraction.to_nifti(copiedDir,False)
-        motion_extraction.to_afni_format(copiedDir)
-        motion_extraction.slice_time_correction(copiedDir)
-        motion_extraction.motion_correction(copiedDir)
-        motion_extraction.make_graph(copiedDir)
+    if args.motion:
+        print 'Now, running motion_extraction'
+        for subject,infoList in allInfo.iteritems():
+            #copiedDir=os.path.join(infoList[4],infoList[8],infoList[1])
+            copiedDir=infoList[8]
+            motion_extraction.to_nifti(copiedDir,False)
+            motion_extraction.to_afni_format(copiedDir)
+            motion_extraction.slice_time_correction(copiedDir)
+            motion_extraction.motion_correction(copiedDir)
+            motion_extraction.make_graph(copiedDir)
 
-    print 'Completed\n'
+        print 'Completed\n'
 
     #--------------------------------------------------------------------------------
     # link freesurfer
@@ -155,35 +162,36 @@ def main(args):
     # '96', '/Volumes/promise/CCNC_MRI_3T', 
     # '/Volumes/20141013', u'\uc870\uac15\uc775']
     #================================================================================
-    class args():
-        pass
+    if args.freesurfer:
+        class args():
+            pass
 
-    class fs_args():
-        pass
-    
-    for subject,infoList in allInfo.iteritems():
-        #copiedDir=os.path.join(infoList[4],infoList[8],infoList[1])
-        copiedDir=infoList[8]
-        print copiedDir
-        args.directory = copiedDir
-        args.nifti = True
-        args.file_input = False
-        args.cwd = False
-        args.output = os.path.join(copiedDir,'FREESURFER')
+        class fs_args():
+            pass
+        
+        for subject,infoList in allInfo.iteritems():
+            #copiedDir=os.path.join(infoList[4],infoList[8],infoList[1])
+            copiedDir=infoList[8]
+            print copiedDir
+            args.directory = copiedDir
+            args.nifti = True
+            args.file_input = False
+            args.cwd = False
+            args.output = os.path.join(copiedDir,'FREESURFER')
 
-        fs_args.subject_loc = copiedDir
-        fs_args.backgrounds = None
-        fs_args.roi_list = "ctx_lh_G_cuneus"
-        fs_args.meanDfLoc = True
-        fs_args.verbose = True
-        fs_args.brain = True
+            fs_args.subject_loc = copiedDir
+            fs_args.backgrounds = None
+            fs_args.roi_list = "ctx_lh_G_cuneus"
+            fs_args.meanDfLoc = True
+            fs_args.verbose = True
+            fs_args.brain = True
 
-        freesurfer.main(fs_args.subject_loc,
-                fs_args.backgrounds,
-                fs_args.roi_list,
-                fs_args.meanDfLoc,
-                fs_args.verbose,
-                fs_args.brain)
+            freesurfer.main(fs_args.subject_loc,
+                    fs_args.backgrounds,
+                    fs_args.roi_list,
+                    fs_args.meanDfLoc,
+                    fs_args.verbose,
+                    fs_args.brain)
 
 
 
@@ -235,44 +243,53 @@ def copiedDirectoryCheck(backUpFrom,logFileInUSB):
 
 # In[325]:
 
-def newDirectoryGrep(backUpFrom,logDf):
+def newDirectoryGrep(inputDirs, backUpFrom,logDf):
     '''
     show the list of folders under the backUpFrom
     if it is confirmed by the user
     excute backup
     '''
-    #grebbing directories in the target
-    allFiles = os.listdir(backUpFrom)
-    directories = [item for item in allFiles if os.path.isdir(os.path.join(backUpFrom,item))
-                   and not item.startswith('$')
-                   and not item.startswith('.')]
-
-    newDirectories = [item for item in directories if not item in [str(x).encode("ascii") for x in logDf.directoryName]]
-
     toBackUp = []
 
-    for folderName in newDirectories:
-        subjFolder = os.path.join(backUpFrom,folderName)
-        stat = os.stat(subjFolder)
-        created = os.stat(subjFolder).st_ctime
-        asciiTime = time.asctime( time.gmtime( created ) )
-        print '''
-        ------------------------------------
-        ------{0}
-        created on ( {1} )
-        ------------------------------------
-        '''.format(folderName,asciiTime)
-        response = raw_input('\nIs this the name of the subject you want to back up? [Yes/No/Quit/noCall] :')
-        if re.search('[yY]|[yY][Ee][Ss]',response):
+    if inputDirs:
+        for subjFolder in inputDirs:
             toBackUp.append(subjFolder)
-        elif re.search('[Dd][Oo][Nn][Ee]|stop|[Qq][Uu][Ii][Tt]|exit',response):
-            break
-        elif re.search('[Nn][Oo][Cc][Aa][Ll][Ll]',response):
-            logDf = noCall(logDf,backUpFrom,folderName)
-        else:
-            continue
 
+    else:
+
+        #grebbing directories in the target
+        allFiles = os.listdir(backUpFrom)
+        directories = [item for item in allFiles if os.path.isdir(os.path.join(backUpFrom,item))
+                       and not item.startswith('$')
+                       and not item.startswith('.')]
+
+        newDirectories = [item for item in directories if not item in [str(x).encode("ascii") for x in logDf.directoryName]]
+
+
+        for folderName in newDirectories:
+            subjFolder = os.path.join(backUpFrom,folderName)
+            stat = os.stat(subjFolder)
+            created = os.stat(subjFolder).st_ctime
+            asciiTime = time.asctime( time.gmtime( created ) )
+            print '''
+            ------------------------------------
+            ------{0}
+            created on ( {1} )
+            ------------------------------------
+            '''.format(folderName,asciiTime)
+            response = raw_input('\nIs this the name of the subject you want to back up? [Yes/No/Quit/noCall] :')
+            if re.search('[yY]|[yY][Ee][Ss]',response):
+                toBackUp.append(subjFolder)
+            elif re.search('[Dd][Oo][Nn][Ee]|stop|[Qq][Uu][Ii][Tt]|exit',response):
+                break
+            elif re.search('[Nn][Oo][Cc][Aa][Ll][Ll]',response):
+                logDf = noCall(logDf,backUpFrom,folderName)
+            else:
+                continue
+
+    print toBackUp
     return toBackUp,logDf
+
 
 def noCall(logDf,backUpFrom,folderName):
     logDf = pd.concat([logDf,pd.DataFrame.from_dict({'directoryName':folderName,'backedUpBy':getpass.getuser(),'backedUpAt':time.ctime()},orient='index').T])
@@ -767,9 +784,10 @@ if __name__ == '__main__':
             eg) {codeName}
             '''.format(codeName=os.path.basename(__file__))))
     parser.add_argument(
-        '-i', '--inputDir',
+        '-i', '--inputDirs',
         help='Location of data to back up. Eg) /Volumes/20160420/CHO_KANG_IK_12344321',
         nargs='*',
+        default=False,
         )
 
     parser.add_argument(
@@ -798,6 +816,27 @@ if __name__ == '__main__':
         '-s', '--spreadsheet',
         help='Location of output excel file. Default : "/ccnc/MRIspreadsheet/MRI.xls"',
         default="/ccnc/MRIspreadsheet/MRI.xls",
+        )
+
+    parser.add_argument(
+        '-f', '--freesurfer',
+        help='Run freesurfer',
+        action='store_true',
+        default=True,
+        )
+
+    parser.add_argument(
+        '-m', '--motion',
+        help='Run motion extraction',
+        action='store_true',
+        default=True,
+        )
+
+    parser.add_argument(
+        '-x', '--executeCopy',
+        help='Execute copy and update database',
+        action='store_true',
+        default=True,
         )
 
     args = parser.parse_args()
