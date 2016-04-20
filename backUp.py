@@ -173,37 +173,39 @@ def main(args):
     # '/Volumes/20141013', u'\uc870\uac15\uc775']
     #================================================================================
     if args.freesurfer:
-        class args():
+        class fs_args():
             pass
 
-        class fs_args():
+        class fs_summary_args():
             pass
         
         for subject,infoList in allInfo.iteritems():
             #copiedDir=os.path.join(infoList[4],infoList[8],infoList[1])
             copiedDir=infoList[8]
             print copiedDir
-            args.directory = copiedDir
-            args.nifti = True
-            args.file_input = False
-            args.cwd = False
-            args.output = os.path.join(copiedDir,'FREESURFER')
+            fs.directory = copiedDir
+            fs.nifti = True
+            fs.file_input = False
+            fs.cwd = False
+            fs.output = os.path.join(copiedDir,'FREESURFER')
 
-            fs_args.subject_loc = copiedDir
-            fs_args.backgrounds = None
-            fs_args.roi_list = "ctx_lh_G_cuneus"
-            fs_args.meanDfLoc = True
-            fs_args.verbose = True
-            fs_args.brain = True
-
-            freesurfer.main(fs_args.subject_loc,
-                    fs_args.backgrounds,
-                    fs_args.roi_list,
-                    fs_args.meanDfLoc,
-                    fs_args.verbose,
-                    fs_args.brain)
+            freesurfer(fs_args)
 
 
+            fs_summary_args.subject_loc = copiedDir
+            fs_summary_args.backgrounds = None
+            fs_summary_args.roi_list = "ctx_lh_G_cuneus"
+            fs_summary_args.meanDfLoc = True
+            fs_summary_args.verbose = True
+            fs_summary_args.brain = True
+
+            
+            freesurfer_summary.main(fs_summary_args.subject_loc,
+                    fs_summary_args.backgrounds,
+                    fs_summary_args.roi_list,
+                    fs_summary_args.meanDfLoc,
+                    fs_summary_args.verbose,
+                    fs_summary_args.brain)
 
     print 'Completed\n'
 
@@ -815,38 +817,38 @@ if __name__ == '__main__':
     parser.add_argument(
         '-b', '--backupDir',
         help='Location of data storage root. Default : "/Volumes/promise/CCNC_MRI_3T"',
-        default="/Volumes/promise/CCNC_MRI_3T",
+        default="/Volumes/CCNC_M2_3/nas_BackUp/CCNC_MRI_3T",
         )
     parser.add_argument(
         '-d', '--database',
         help='Location of database file. Default : "/Volumes/promise/CCNC_MRI_3T/database/database.xls"',
-        default="/Volumes/promise/CCNC_MRI_3T/database/database.xls",
+        default="/Volumes/CCNC_M2_3/nas_BackUp/CCNC_MRI_3T",
         )
     parser.add_argument(
         '-s', '--spreadsheet',
         help='Location of output excel file. Default : "/ccnc/MRIspreadsheet/MRI.xls"',
-        default="/ccnc/MRIspreadsheet/MRI.xls",
+        default="/ccnc/MRI.xls",
         )
 
     parser.add_argument(
         '-f', '--freesurfer',
         help='Run freesurfer',
         action='store_true',
-        default=True,
+        default=False,
         )
 
     parser.add_argument(
         '-m', '--motion',
         help='Run motion extraction',
         action='store_true',
-        default=True,
+        default=False,
         )
 
     parser.add_argument(
         '-x', '--executeCopy',
         help='Execute copy and update database',
         action='store_true',
-        default=True,
+        default=False,
         )
 
     args = parser.parse_args()
