@@ -12,6 +12,7 @@ import pickle
 from progressbar import AnimatedMarker,ProgressBar,Percentage,Bar
 import glob
 import argparse
+import textwrap
 import collections
 import pandas as pd
 import dicom
@@ -759,5 +760,36 @@ def log(subject,koreanName,group,timeline,birthday,note,target,subjInitial,fulln
 
 
 
-if __name__=='__main__':
-    main()
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=textwrap.dedent('''\
+            {codeName} : Copy MRI data from external hard drive to system.
+                         It automatically adds logs to ccnc database.
+            ========================================
+            eg) {codeName}
+            '''.format(codeName=os.path.basename(__file__))))
+    parser.add_argument(
+        '-i', '--inputDir',
+        help='Location of data to back up. Eg) /Volumes/20160420/CHO_KANG_IK_12344321',
+        nargs='*',
+        )
+    parser.add_argument(
+        '-b', '--backupDir',
+        help='Location of data storage root. Default : "/Volumes/promise/CCNC_MRI_3T"',
+        default="/Volumes/promise/CCNC_MRI_3T",
+        )
+    parser.add_argument(
+        '-d', '--database',
+        help='Location of database file. Default : "/Volumes/promise/CCNC_MRI_3T/database/database.xls"',
+        default="/Volumes/promise/CCNC_MRI_3T/database/database.xls",
+        )
+    parser.add_argument(
+        '-s', '--spreadsheet',
+        help='Location of output excel file. Default : "/ccnc/MRIspreadsheet/MRI.xls"',
+        default="/ccnc/MRIspreadsheet/MRI.xls",
+        )
+
+    args = parser.parse_args()
+    main(args)
+
