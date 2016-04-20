@@ -10,10 +10,12 @@ from xlrd import open_workbook
 from xlutils.copy import copy
 
 def main(args):
-    sourceFile = pd.ExcelFile('/Volumes/promise/CCNC_MRI_3T/database/database.xls')
+
+
+    sourceFile = pd.ExcelFile(args.database)
     
     sourceDf = sourceFile.parse(sourceFile.sheet_names[0])
-    target = '/ccnc/MRIspreadsheet/MRI.xls'
+    target = args.outExcel
 
     try:
         if args.study:
@@ -125,7 +127,9 @@ if __name__=='__main__':
             #epilog="By Kevin, 26th May 2014")
     parser.add_argument('-dir','--directory',help='Data directory location, default = pwd',default=os.getcwd())
     parser.add_argument('-s','--study',action='store_true',help='Divide the database by studies')
-    args = parser.parse_args()
+    parser.add_argument('-d','--database', help='Database location')
+    parser.add_argument('-o','--outExcel', help='Excel spreadsheet output location')
 
+    args = parser.parse_args()
     main(args)
 

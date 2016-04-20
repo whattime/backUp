@@ -110,8 +110,14 @@ def main(args):
     #--------------------------------------------------------------------------------
     # Update the database excel for CCNC
     #================================================================================
+
     if args.executeCopy:
-        updateSpreadSheet.main('noInput')
+        class spreadsheetInput():
+            def __init__(self):
+                self.database = args.database
+                self.outExcel = args.spreadsheet
+        us_input = spreadsheetInput()
+        updateSpreadSheet.main(us_input)
 
     print '-----------------'
     print 'Completed\n'
