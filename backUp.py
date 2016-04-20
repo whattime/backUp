@@ -22,24 +22,21 @@ import freesurfer
 import freesurfer_summary
 
 
-# In[321]:
-
-#--------------------------------------------------------------------------------
-# Initial information
-#--------------------------------------------------------------------------------
-#backUpFrom = '/Volumes/56/' #Find subj to back up from
-#backUpFrom = '/Volumes/promise/CCNC_3T_MRI/backUpTemp/'
-backUpFrom = '/Volumes/20151118'
-
-
-#backUpFrom = '/Volumes/promise/pracDirectory/'
-backUpTo = '/Volumes/promise/CCNC_MRI_3T'
-logFileInUSB = os.path.join(backUpFrom,"log.xlsx")
-DataBaseAddress = '/Volumes/promise/CCNC_MRI_3T/database/database.xls'
 
 
 
-def main():
+def main(args):
+    #--------------------------------------------------------------------------------
+    # Initial information
+    #--------------------------------------------------------------------------------
+    backUpFrom = args.hddLocation
+    backUpTo = args.backupDir
+    DataBaseAddress = args.database
+
+    # if USBlogFile is not specified
+    logFileInUSB = args.USBlogFile
+    if not args.USBlogFile:
+        logFileInUSB = os.path.join(backUpFrom,"log.xlsx")
 
     #--------------------------------------------------------------------------------
     # Load previously copied directories
@@ -52,14 +49,14 @@ def main():
     #
     #     If there is no new directory --> sys.exit
     #================================================================================
-    try:
-        logDf=copiedDirectoryCheck(backUpFrom,logFileInUSB)
-        newDirectoryList,logDf=newDirectoryGrep(backUpFrom,logDf)
-        logDf.to_excel(logFileInUSB,'Sheet1')
-        if newDirectoryList==[]:
-            sys.exit()
-    except:
-        sys.exit('Please insert USB external drive')
+    #try:
+    logDf=copiedDirectoryCheck(backUpFrom,logFileInUSB)
+    newDirectoryList,logDf=newDirectoryGrep(backUpFrom,logDf)
+    logDf.to_excel(logFileInUSB,'Sheet1')
+    if newDirectoryList==[]:
+        sys.exit()
+    #except:
+        #sys.exit('Please insert USB external drive')
     #================================================================================
 
 
@@ -77,7 +74,7 @@ def main():
     #          including information about the new subjects
     #================================================================================
     foundDict=findDtiDkiT1restRest2(newDirectoryList)
-    allInfo,df,newDfList=verifyNumbersAndLog(foundDict,backUpTo,backUpFrom)
+    allInfo,df,newDfList=verifyNumbersAndLog(foundDict,backUpTo,backUpFrom,DataBaseAddress)
     #================================================================================
 
 
@@ -620,7 +617,7 @@ def executeCopy(allInfo,df,newDf):
 
 # In[308]:
 
-def verifyNumbersAndLog(foundDict,backUpTo,backUpFrom):
+def verifyNumbersAndLog(foundDict,backUpTo,backUpFrom, DataBaseAddress):
 
     #{subject:{'T1':['source','file number'],'DTI':['source','file number'],...},subject2:{...}}
     allInfo={}
@@ -774,6 +771,19 @@ if __name__ == '__main__':
         help='Location of data to back up. Eg) /Volumes/20160420/CHO_KANG_IK_12344321',
         nargs='*',
         )
+
+    parser.add_argument(
+        '-h', '--hddLocation',
+        help='Location of external drive that contains new data. Eg) /Volumes/160412',
+        default='/Volumes/160412',
+        )
+
+    parser.add_argument(
+        '-l', '--USBlogFile',
+        help='Location of excel file that contains back up log. Eg) /Volumes/160412/log.xlsx',
+        default=False,
+        )
+
     parser.add_argument(
         '-b', '--backupDir',
         help='Location of data storage root. Default : "/Volumes/promise/CCNC_MRI_3T"',
