@@ -77,15 +77,16 @@ if __name__ == '__main__':
 
 class argparse():
     def __init__(self):
-        self.inputDirs = ['/Users/kcho/backUp/KIM_SE_UK_46676612']
-        self.backupDir = '/Users/kcho/backUp/tmp'
-        self.database = '/Users/kcho/backUp/database.xls'
-        self.spreadsheet = '/Users/kcho/backUp/MRI.xls'
-        self.hddLocation= '/Users/kcho/backUp/'
-        self.USBlogFile= '/Users/kcho/backUp/log.xlsx'
+        #self.inputDirs = ['/Users/kcho/backUp/KIM_SE_UK_46676612']
+        self.backupDir = '/Volumes/CCNC_M2_3/nas_BackUp/CCNC_MRI_3T'
+        self.database = '/Volumes/CCNC_M2_3/nas_BackUp/CCNC_MRI_3T/database/database.xls'
+        self.spreadsheet = '/ccnc/MRI.xls'
+        self.hddLocation= '/Volumes/160412'
         self.freesurfer = False
         self.executeCopy = False
         self.motion = False
+        self.USBlogFile = False
+        self.inputDirs= False
 
 args = argparse()
 print args.inputDirs
