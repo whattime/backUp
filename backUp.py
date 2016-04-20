@@ -75,6 +75,8 @@ def main(args):
     #          including information about the new subjects
     #================================================================================
     foundDict=findDtiDkiT1restRest2(newDirectoryList)
+
+    #if args.prac:
     allInfo,df,newDfList=verifyNumbersAndLog(foundDict,backUpTo,backUpFrom,DataBaseAddress)
     #================================================================================
 
@@ -123,6 +125,8 @@ def main(args):
     print 'Completed\n'
 
     print allInfo
+    print df
+    print newDfList
 
     #--------------------------------------------------------------------------------
     # link motion_extraction
@@ -797,7 +801,7 @@ if __name__ == '__main__':
         )
 
     parser.add_argument(
-        '-h', '--hddLocation',
+        '-hd', '--hddLocation',
         help='Location of external drive that contains new data. Eg) /Volumes/160412',
         default='/Volumes/160412',
         )
