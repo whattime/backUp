@@ -30,16 +30,17 @@ from scp import SCPClient
 
 
 def main(args):
-    #--------------------------------------------------------------------------------
-    # Initial information
-    #--------------------------------------------------------------------------------
+    #--------------------------#
+    # Initial information      #
+    #--------------------------#
     backUpFrom = args.hddLocation
     backUpTo = args.backupDir
     DataBaseAddress = args.database
 
-    # if USBlogFile is not specified
-    logFileInUSB = args.USBlogFile
-    if not args.USBlogFile:
+    # External HDD log
+    if args.USBlogFile:
+        logFileInUSB = args.USBlogFile
+    else args.USBlogFile:
         logFileInUSB = os.path.join(backUpFrom,"log.xlsx")
 
     #--------------------------------------------------------------------------------
@@ -53,16 +54,12 @@ def main(args):
     #
     #     If there is no new directory --> sys.exit
     #================================================================================
-    #try:
     logDf=copiedDirectoryCheck(backUpFrom,logFileInUSB)
     newDirectoryList,logDf=newDirectoryGrep(args.inputDirs, backUpFrom,logDf)
     
     logDf.to_excel(logFileInUSB,'Sheet1')
     if newDirectoryList==[]:
-        sys.exit()
-    #except:
-        #sys.exit('Please insert USB external drive')
-    #================================================================================
+        sys.exit('Everything have been backed up !')
 
 
     #--------------------------------------------------------------------------------
@@ -213,10 +210,20 @@ def main(args):
 
     print 'Completed\n'
 
-
-
     
 
+
+    #========================#
+    # dual back up to nas    #
+    #========================#
+    if args.nasBackup:
+        server = 147.47.228.192    
+        for subject,infoList in allInfo.iteritems():
+            #copiedDir=os.path.join(infoList[4],infoList[8],infoList[1])
+            copiedDir=infoList[8]
+            server_connect(server, copiedDir)
+
+    print completed
 
 
 
@@ -498,15 +505,15 @@ def studyName():
     return studyName
 
 def getGroup():
-    possibleGroups = str('BADUK,PET,CHR,DNO,EMO,FEP,GHR,NOR,OCM,ONS,OXY,PAIN,SPR,UMO,IGD,IGH,AUD').split(',')
+    possibleGroups = str('BADUK,PET,CHR,DNO,EMO,FEP,GHR,NOR,OCM,ONS,OXY,PAIN,SPR,UMO,IGD,IGH,AUD,ETC').split(',')
     subjectNameWithGroup={}
 
-    groupName=raw_input('\twhich group ? [BADUK/PET/CHR/DNO/EMO/FEP/GHR/NOR/OCM/ONS/OXY/PAIN/SPR/UMO/IGH/IGD/AUD] :')
+    groupName=raw_input('\twhich group ? [BADUK/PET/CHR/DNO/EMO/FEP/GHR/NOR/OCM/ONS/OXY/PAIN/SPR/UMO/IGH/IGD/AUD/ETC] :')
     timeline=raw_input('\tfollow up (if follow up, type the period) ? [baseline/period] :')
     groupName = groupName.upper()
 
     if groupName not in possibleGroups:
-        print 'not in groups, let Kevin know.'
+        print 'not in groups, let Dahye know.'
         groupName=''
 
     if groupName == 'BADUK':
@@ -793,19 +800,18 @@ def log(subject,koreanName,group,timeline,birthday,note,target,subjInitial,fulln
 
 #def networkCopy(allInfoDf):
 
-def server_connect(server, data_from, data_to):
+def server_connect(server, data_from):
     ssh = SSHClient()
     ssh.load_system_host_keys()
-    username='mri'
-    password = getpass.getpass('Password : ')
+    username='admin'
+    data_to='/volume1/dual_back_up'
+    password = getpass.getpass('Password admin@nas : ')
     ssh.connect(server, username=username, password=password)
 
-    
     with SCPClient(ssh.get_transport()) as scp:
-        print 'Connected to {server}'.format(server=server)
-        print 'Now copying {0} to {1}@{2}'.format(data_from, server, data_to)
+        print 'Connected to {server} and copying data'.format(server=server)
+        print '\t',data_from,'to',server+'@'+data_to
         scp.put(data_from, data_to)
-        print 'scp connected to {server}'.format(server=server)
 
 
 
