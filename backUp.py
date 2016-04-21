@@ -21,6 +21,10 @@ import motion_extraction
 import freesurfer
 import freesurfer_summary
 
+# scp modules for network dual back up
+import getpass
+from paramiko import SSHClient
+from scp import SCPClient
 
 
 
@@ -786,6 +790,26 @@ def log(subject,koreanName,group,timeline,birthday,note,target,subjInitial,fulln
 
 
 
+
+#def networkCopy(allInfoDf):
+
+def server_connect(server, data_from, data_to):
+    ssh = SSHClient()
+    ssh.load_system_host_keys()
+    username='mri'
+    password = getpass.getpass('Password : ')
+    ssh.connect(server, username=username, password=password)
+
+    
+    with SCPClient(ssh.get_transport()) as scp:
+        print 'Connected to {server}'.format(server=server)
+        print 'Now copying {0} to {1}@{2}'.format(data_from, server, data_to)
+        scp.put(data_from, data_to)
+        print 'scp connected to {server}'.format(server=server)
+
+
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -795,6 +819,7 @@ if __name__ == '__main__':
             ========================================
             eg) {codeName}
             '''.format(codeName=os.path.basename(__file__))))
+
     parser.add_argument(
         '-i', '--inputDirs',
         help='Location of data to back up. Eg) /Volumes/20160420/CHO_KANG_IK_12344321',
@@ -851,6 +876,12 @@ if __name__ == '__main__':
         default=False,
         )
 
+    parser.add_argument(
+        '-n', '--nasBackup',
+        help='Makes dual back up to NAS',
+        action='store_true',
+        default=False,
+        )
     args = parser.parse_args()
     main(args)
 
