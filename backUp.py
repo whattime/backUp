@@ -40,6 +40,8 @@ def main(args):
     # External HDD log
     if args.USBlogFile:
         logFileInUSB = args.USBlogFile
+    if args.inputDirs:
+        logFileInUSB = os.path.join(os.getcwd(),"log.xlsx")
     else:
         logFileInUSB = os.path.join(backUpFrom,"log.xlsx")
 
@@ -354,7 +356,8 @@ def findDtiDkiT1restRest2(newDirectoryList):
 
         num=1
         pbar=ProgressBar().start()
-        for root, dirs, files in os.walk(sourceSubjectDIR):
+        for root, dirs, files in walklevel(sourceSubjectDIR, 3):
+            print root, num
             pbar.update(num)
             num+=5
             if len(dirs)==0:
@@ -809,6 +812,15 @@ def server_connect(server, data_from):
 
 
 
+def walklevel(some_dir, level=1):
+    some_dir = some_dir.rstrip(os.path.sep)
+    assert os.path.isdir(some_dir)
+    num_sep = some_dir.count(os.path.sep)
+    for root, dirs, files in os.walk(some_dir):
+        yield root, dirs, files
+        num_sep_this = root.count(os.path.sep)
+        if num_sep + level <= num_sep_this:
+            del dirs[:]
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
