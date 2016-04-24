@@ -40,7 +40,7 @@ def main(args):
     # External HDD log
     if args.USBlogFile:
         logFileInUSB = args.USBlogFile
-    else args.USBlogFile:
+    else:
         logFileInUSB = os.path.join(backUpFrom,"log.xlsx")
 
     #--------------------------------------------------------------------------------
@@ -217,7 +217,7 @@ def main(args):
     # dual back up to nas    #
     #========================#
     if args.nasBackup:
-        server = 147.47.228.192    
+        server = '147.47.228.192'
         for subject,infoList in allInfo.iteritems():
             #copiedDir=os.path.join(infoList[4],infoList[8],infoList[1])
             copiedDir=infoList[8]
