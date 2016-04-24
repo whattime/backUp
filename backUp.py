@@ -325,19 +325,13 @@ def findDtiDkiT1restRest2(newDirectoryList):
     '''
     dictionary {subject:{t1:t1location,DTI:DTIlocation,...}}
     '''
-    #t1 = re.compile(r'TFL\S*|\S*T1\S*|\S*t1\S*')
-    #dti = re.compile(r'[Dd][Tt][Ii]\S*\(.\)_\d+\S*')
-    #dki = re.compile(r'[Dd][Kk][Ii]\S*\(.\)_\d+\S*')
-    #rest = re.compile(r'\S*[Rr][Ee][Ss][Tt]\S*')
-    #t2flair = re.compile(r'\S*[Ff][Ll][Aa][Ii][Rr]\S*')
-    #t2tse = re.compile(r'\S*[Tt][Ss][Ee]\S*')
+
+    # Regrex compilers
     t1 = re.compile(r'tfl|[^s]t1',re.IGNORECASE)
-    #dti = re.compile(r'dti.*(?!(fa|exp|colfa))',re.IGNORECASE)
     dti = re.compile(r'dti\S*\(.\)_\d+\S*',re.IGNORECASE)
     dtiFA = re.compile(r'dti.*[^l]fa',re.IGNORECASE)
     dtiEXP = re.compile(r'dti.*exp',re.IGNORECASE)
     dtiCOLFA = re.compile(r'dti.*colfa',re.IGNORECASE)
-    #dki = re.compile(r'dki',re.IGNORECASE)
     dki = re.compile(r'dki\S*\(.\)_\d+\S*',re.IGNORECASE)
     dkiFA = re.compile(r'dki.*[^l]fa',re.IGNORECASE)
     dkiEXP = re.compile(r'dki.*exp',re.IGNORECASE)
@@ -345,7 +339,7 @@ def findDtiDkiT1restRest2(newDirectoryList):
     rest = re.compile(r'rest|rest\S*4060',re.IGNORECASE)
     t2flair = re.compile(r'flair',re.IGNORECASE)
     t2tse = re.compile(r'tse',re.IGNORECASE)
-#    epi = re.compile(r'epi',re.IGNORECASE)
+
 
     foundDict={}
     #nameDictionary={t1:'T1',rest:'REST',t2flair:'T2FLAIR',t2tse:'T2TSE',dtiFA:'DTI_FA',dtiEXP:'DTI_EXP',dtiCOLFA:'DTI_COLFA',dkiFA:'DKI_FA',dkiEXP:'DKI_EXP',dkiCOLFA:'DKI_COLFA'}
