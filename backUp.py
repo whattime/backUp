@@ -20,6 +20,8 @@ import updateSpreadSheet
 import motion_extraction
 import freesurfer
 import freesurfer_summary
+import subject as subj
+#from subject import subject
 
 # scp modules for network dual back up
 import getpass
@@ -28,124 +30,36 @@ from scp import SCPClient
 
 
 
-
-def main(args):
-    #--------------------------#
-    # Initial information      #
-    #--------------------------#
-    backUpFrom = args.hddLocation
-    backUpTo = args.backupDir
-    DataBaseAddress = args.database
-
+def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo, DataBaseAddress, spreadsheet, freesurfer, motion, executeCopy, nasBackup):
     # External HDD log
-    if args.USBlogFile:
-        logFileInUSB = args.USBlogFile
-    if args.inputDirs:
+    if USBlogFile:
+        logFileInUSB = USBlogFile
+    elif args.inputDirs:
         logFileInUSB = os.path.join(os.getcwd(),"log.xlsx")
     else:
         logFileInUSB = os.path.join(backUpFrom,"log.xlsx")
 
-    #--------------------------------------------------------------------------------
-    # Load previously copied directories
-    #--------------------------------------------------------------------------------
-    #     logDf : log saved in external hard drive
-    #     newDirectoryList : recently added directory to the external hard drive
-    #
-    #     If user wants a directory not to be called again,
-    #         logDf is updated with the directory
-    #
-    #     If there is no new directory --> sys.exit
-    #================================================================================
-    logDf=copiedDirectoryCheck(backUpFrom,logFileInUSB)
-    newDirectoryList,logDf=newDirectoryGrep(args.inputDirs, backUpFrom,logDf)
-    
+    logDf = copiedDirectoryCheck(backUpFrom,logFileInUSB)
+    newDirectoryList,logDf = newDirectoryGrep(args.inputDirs, backUpFrom,logDf)
     logDf.to_excel(logFileInUSB,'Sheet1')
+
     if newDirectoryList==[]:
         sys.exit('Everything have been backed up !')
 
+    subjectClassList = []
+    for newDirectory in newDirectoryList:
+        subjClass = subj.subject(newDirectory)
+        subjectClassList.append(subjClass)
+        if args.executeCopy:
+            executeCopy(subjClass)
 
-    #--------------------------------------------------------------------------------
-    # check the number of images in the new directories
-    #--------------------------------------------------------------------------------
-    #     foundDict : {newDirName:{modalityName:modalitySource,fileNumber}}
-    #
-    #     allInfo : {newDirName:[group,followUp,birthday,note,target,
-    #                            subjInitial,fullname,subjNum,targetDirectory,sex,
-    #                            allModalityWithLocation,maxNum,backUpTo,backUpFrom,
-    #                            koreanName]
-    #
-    #     df : pandas dataframe made with the function 'log'
-    #          including information about the new subjects
-    #================================================================================
-    foundDict=findDtiDkiT1restRest2(newDirectoryList)
+            class spreadsheetInput():
+                def __init__(self):
+                    self.database = database
+                    self.outExcel = spreadsheet
+            us_input = spreadsheetInput()
+            updateSpreadSheet.main(us_input)
 
-    #if args.prac:
-    allInfo,df,newDfList=verifyNumbersAndLog(foundDict,backUpTo,backUpFrom,DataBaseAddress)
-    #================================================================================
-
-
-    #--------------------------------------------------------------------------------
-    # check the number of images in the new directories
-    #================================================================================
-    if args.executeCopy:
-        executeCopy(allInfo,df,newDfList)
-    #individualLog(allInfo,df)
-    #================================================================================
-
-
-    #--------------------------------------------------------------------------------
-    # Update the database excel and log in the external hard-drive
-    #================================================================================
-
-    #df = changeencode(df,['koreanName','note'])
-    #writer = pd.ExcelWriter(DataBaseAddress)
-    #df.to_excel(DataBaseAddress,sheet_name='rearrangeWithId',engine='xlsxwriter')
-    #writer.save()
-
-    #df.to_excel(DataBaseAddress,sheet_name='rearrangeWithId',engine='xlsxwriter')
-    if args.executeCopy:
-        df.to_excel(DataBaseAddress,sheet_name='rearrangeWithId')
-
-        for dirName,value in allInfo.iteritems():
-            logDf = noCall(logDf,backUpFrom,dirName)
-            logDf.to_excel(logFileInUSB,'Sheet1')
-    #================================================================================
-
-
-    #--------------------------------------------------------------------------------
-    # Update the database excel for CCNC
-    #================================================================================
-
-    if args.executeCopy:
-        class spreadsheetInput():
-            def __init__(self):
-                self.database = args.database
-                self.outExcel = args.spreadsheet
-        us_input = spreadsheetInput()
-        updateSpreadSheet.main(us_input)
-
-    print '-----------------'
-    print 'Completed\n'
-
-    print allInfo
-    print df
-    print newDfList
-
-    #--------------------------------------------------------------------------------
-    # link motion_extraction
-    # allInfo[subject]=[group,followUp,birthday,note,target,
-    #                   subjInitial,fullname,subjNum,targetDirectory,
-    #                   sex,allModalityWithLocation,maxNum,
-    #                   backUpTo,backUpFrom,koreanName]
-    # ['NOR', 'baseline', '1988-09-16', 'ha', 
-    # '/Volumes/promise/CCNC_MRI_3T/NOR', 'CKI', 'ChoKangIk', 
-    # '88091612', 'NOR96_CKI', 'M', 
-    # {'DTI': ['/Volumes/20141013/CHO_KANG_IK_88091612/RESEARCH_STUDY_RESEARCH_STUDY_20150807_173318_875000/DTI_64D_B1K(2)_0006', 65], 
-    # 'REST': ['/Volumes/20141013/CHO_KANG_IK_88091612/RESEARCH_STUDY_RESEARCH_STUDY_20150807_173318_875000/REST_FMRI_PHASE_116_(1)_0005', 4060], 
-    # 'T1': ['/Volumes/20141013/CHO_KANG_IK_88091612/RESEARCH_STUDY_RESEARCH_STUDY_20150807_173318_875000/TFL3D_208_SLAB_0004', 208]},
-    # '96', '/Volumes/promise/CCNC_MRI_3T', 
-    # '/Volumes/20141013', u'\uc870\uac15\uc775']
-    #================================================================================
 
     if args.motion:
         print 'Now, running motion_extraction'
@@ -158,23 +72,6 @@ def main(args):
             motion_extraction.motion_correction(copiedDir)
             motion_extraction.make_graph(copiedDir)
 
-        print 'Completed\n'
-
-    #--------------------------------------------------------------------------------
-    # link freesurfer
-    # allInfo[subject]=[group,followUp,birthday,note,target,
-    #                   subjInitial,fullname,subjNum,targetDirectory,
-    #                   sex,allModalityWithLocation,maxNum,
-    #                   backUpTo,backUpFrom,koreanName]
-    # ['NOR', 'baseline', '1988-09-16', 'ha', 
-    # '/Volumes/promise/CCNC_MRI_3T/NOR', 'CKI', 'ChoKangIk', 
-    # '88091612', 'NOR96_CKI', 'M', 
-    # {'DTI': ['/Volumes/20141013/CHO_KANG_IK_88091612/RESEARCH_STUDY_RESEARCH_STUDY_20150807_173318_875000/DTI_64D_B1K(2)_0006', 65], 
-    # 'REST': ['/Volumes/20141013/CHO_KANG_IK_88091612/RESEARCH_STUDY_RESEARCH_STUDY_20150807_173318_875000/REST_FMRI_PHASE_116_(1)_0005', 4060], 
-    # 'T1': ['/Volumes/20141013/CHO_KANG_IK_88091612/RESEARCH_STUDY_RESEARCH_STUDY_20150807_173318_875000/TFL3D_208_SLAB_0004', 208]},
-    # '96', '/Volumes/promise/CCNC_MRI_3T', 
-    # '/Volumes/20141013', u'\uc870\uac15\uc775']
-    #================================================================================
     if args.freesurfer:
         class fs_args():
             pass
@@ -211,13 +108,7 @@ def main(args):
                     fs_summary_args.brain)
 
     print 'Completed\n'
-
     
-
-
-    #========================#
-    # dual back up to nas    #
-    #========================#
     if args.nasBackup:
         server = '147.47.228.192'
         for subject,infoList in allInfo.iteritems():
@@ -593,74 +484,35 @@ def dicomNumberCheckInDictionary(allModalityWithLocation):
                     aModalityWithLocation[0],len(os.listdir(aModalityWithLocation[1])))
 
 
-def executeCopy(allInfo,df,newDf):
-    #newDf --> {subject:allInfoDf}
-    maxNum=0
-    #allInfo[subject]=[target,group,followUp,targetDirectory,allModalityWithLocation]
-    #allModalityWithLocation
-    #{'T1':['source','file number'],'DTI':['source','file number']}
+def executeCopy(subjClass):
+    print '-----------------'
+    print 'Copying',subject
+    print '-----------------'
 
-    backedUpGroups=[]
-    for subject,infoList in allInfo.iteritems():
-        print '-----------------'
-        print 'Copying',subject
-        print '-----------------'
+    #If it's follow up (the name exists)
+    #infoList[-1] : koreanName
+        for modality,modalityInfo in infoList[10].iteritems():
+            #group + previousdir + follow up period(saved in the variable baseline)
+            modalityTarget=os.path.join(infoList[4],infoList[8])
+            print 'Copying {}'.format(modality)
+            os.system('mkdir -p {0}'.format(modalityTarget))
+            shutil.copytree(modalityInfo[0],os.path.join(modalityTarget,modality))
 
-        #If it's follow up (the name exists)
-        #infoList[-1] : koreanName
-        if infoList[1] != 'baseline':
-            for modality,modalityInfo in infoList[10].iteritems():
-                #group + previousdir + follow up period(saved in the variable baseline)
-                modalityTarget=os.path.join(infoList[4],infoList[8])
+
+
+                modalityTarget=os.path.join(allInfo[subject][4],allInfo[subject][8],'baseline')
+                print modalityTarget
                 print 'Copying {}'.format(modality)
                 os.system('mkdir -p {0}'.format(modalityTarget))
                 shutil.copytree(modalityInfo[0],os.path.join(modalityTarget,modality))
 
-
-
-        else:
-            for modality,modalityInfo in infoList[10].iteritems():
-                # modalityInfo[0] : source
-                # modalityInfo[1] : fileNumber
-                # allInfo[subject]=[target,group,followUp,targetDirectory,allModalityWithLocation]
-                # allModalityWithLocation
-                # {'T1':['source','file number'],'DTI':['source','file number']}
-
-                # If the backing up subjects belong to the same group
-                # group : allInfo[subject][0]
-                # targetDirName : allInfo[subject][8]
-                if allInfo[subject][0] in backedUpGroups:
-                    uniq=len(backedUpGroups.count(allInfo[subject][0]))
-                    currentNum=re.search('[A-Z]{3}(\d{2})',allInfo[subject][8])
-                    newNum=int(currentNum)+uniq
-                    modalityTarget=os.path.join(
-                            allInfo[subject][4],
-                            allInfo[subject][8].replace(currentNum,newNum),'baseline')
-                    print 'Copying {}'.format(modality)
-                    os.system('mkdir -p {0}'.format(modalityTarget))
-                    shutil.copytree(modalityInfo[0],os.path.join(modalityTarget,modality))
-                else:
-
-                    modalityTarget=os.path.join(allInfo[subject][4],allInfo[subject][8],'baseline')
-                    print modalityTarget
-                    print 'Copying {}'.format(modality)
-                    os.system('mkdir -p {0}'.format(modalityTarget))
-                    shutil.copytree(modalityInfo[0],os.path.join(modalityTarget,modality))
-
-        subjectDf = newDf[subject]
-        subjectDf.to_csv(os.path.join(modalityTarget,'log.txt'),sep='\t',encoding='utf-8')
+    subjectDf = newDf[subject]
+    subjectDf.to_csv(os.path.join(modalityTarget,'log.txt'),sep='\t',encoding='utf-8')
 
 
 
 # In[308]:
-
-def verifyNumbersAndLog(foundDict,backUpTo,backUpFrom, DataBaseAddress):
-
-    #{subject:{'T1':['source','file number'],'DTI':['source','file number'],...},subject2:{...}}
-    allInfo={}
-
-
-
+def processDB(DataBaseAddress):
     if os.path.isfile(DataBaseAddress):
         excelFile = pd.ExcelFile(DataBaseAddress)
         df = excelFile.parse(excelFile.sheet_names[0])
@@ -686,8 +538,13 @@ def verifyNumbersAndLog(foundDict,backUpTo,backUpFrom, DataBaseAddress):
                                            }
                                      },orient='index'
                                     )
+    return df
 
+def verifyNumbersAndLog(foundDict,backUpTo,backUpFrom, DataBaseAddress):
 
+    #{subject:{'T1':['source','file number'],'DTI':['source','file number'],...},subject2:{...}}
+    allInfo={}
+    df = processDB(DataBaseAddress)
     newDfList = {}
     #for each subjects
     for subject,allModalityWithLocation in foundDict.iteritems():
@@ -895,5 +752,7 @@ if __name__ == '__main__':
         default=False,
         )
     args = parser.parse_args()
-    main(args)
 
+    backUp(args.inputDirs, args.hddLocation, args.USBlogFile, args.backupDir,
+            args.database, args.spreadsheet, args.freesurfer, args.motion,
+            args.executeCopy, args.nasBackup)

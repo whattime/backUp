@@ -1,7 +1,9 @@
 import os
 import dicom
 import re
+import pd
 import getpass
+from backUp import getName, maxGroupNum
 
 class subject(object):
     def __init__(self, input):
@@ -19,7 +21,9 @@ class subject(object):
         self.dirs = dicomDirDict.keys()
         self.allDicoms = reduce(lambda x, y: x + y, dicomDirDict.values())
         self.allDicomNum = len(self.allDicoms)
+        self.dirDicomNum = [(x,len(y)) for (x,y) in dicomDirDict.iteritems()]
         self.firstDicom = self.allDicoms[0]
+        self.modalityMapping = [modalityMapping(x) for x in self.dirs]
 
         ds = dicom.read_file(self.firstDicom)
         self.age = re.search('^0(\d{2})Y',ds.PatientAge).group(1)
@@ -27,9 +31,52 @@ class subject(object):
         self.id = ds.PatientID
         self.fullname = ds.PatientName
         self.surname = ds.PatientName.split('^')[0]
-        self.name= ds.PatientName.split('^')[1]
+        self.name = ds.PatientName.split('^')[1]
+        self.initial = self.surname[0]+''.join([x[0] for x in self.name.split(' ')])
         self.sex = ds.PatientSex
         self.date = ds.StudyDate
         self.experimenter = getpass.getuser()
 
         self.note = raw_input('Any note ? : ')
+        self.group = raw_input('Group ? : ')
+        self.number_for_group = maxGroupNum('/Volumes/promise/CCNC_MRI_3T/CHR')
+        self.study = raw_input('Study name ? : ')
+
+        self.timeline = raw_input('baseline or follow up ? eg) baseline or 2yfu : ')
+        if self.timeline != 'followUp':
+            df = pd.ExcelFile('/Volumes/promise/nas_BackUp/CCNC_MRI_3T/database/database.xls').parse(0)
+            self.folderNames = df.ix[(df.timeline=='baseline') & (df.patientNumber == int(self.id)), 
+                                     'folderName'].get_values().tostring()
+            if self.folderName == '':
+                self.folderName = self.group + self.initial + '_' + self.number_for_group
+        else:
+            self.folderName = self.group + self.initial + '_' + self.number_for_group
+
+        self.target_dir = os.path.join('/Volumes/promise/CCNC_MRI_3T/',
+                self.group,
+                self.group + self.initial + '_' + self.number_for_group,
+                self.timeline)
+
+def modalityMapping(directory):
+    t1 = re.compile(r'tfl|[^s]t1',re.IGNORECASE)
+    dti = re.compile(r'dti\S*\(.\)_\d+\S*',re.IGNORECASE)
+    dtiFA = re.compile(r'dti.*[^l]fa',re.IGNORECASE)
+    dtiEXP = re.compile(r'dti.*exp',re.IGNORECASE)
+    dtiCOLFA = re.compile(r'dti.*colfa',re.IGNORECASE)
+    dki = re.compile(r'dki\S*\(.\)_\d+\S*',re.IGNORECASE)
+    dkiFA = re.compile(r'dki.*[^l]fa',re.IGNORECASE)
+    dkiEXP = re.compile(r'dki.*exp',re.IGNORECASE)
+    dkiCOLFA = re.compile(r'dki.*colfa',re.IGNORECASE)
+    rest = re.compile(r'rest|rest\S*4060',re.IGNORECASE)
+    t2flair = re.compile(r'flair',re.IGNORECASE)
+    t2tse = re.compile(r'tse',re.IGNORECASE)
+    scout = re.compile(r'scout',re.IGNORECASE)
+
+    for modality in (t1,'T1'),(rest,'REST'),(dki,"DKI"),(dti,'DTI'),(t2flair,'T2FLAIR'),(t2tse,'T2TSE'),(dtiFA,'DTI_FA'),(dtiEXP,   'DTI_EXP'),(dtiCOLFA,'DTI_COLFA'),(dkiFA,'DKI_FA'),(dkiEXP,'DKI_EXP'),(dkiCOLFA,'DKI_COLFA'), (scout, 'SCOUT'):
+        basename = os.path.basename(directory)
+        try:
+            matchingSource = modality[0].search(basename).group(0)
+            return modality[1]
+        except:
+            pass
+    return directory
