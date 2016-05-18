@@ -1,13 +1,13 @@
+# -*- coding: utf-8 -*-
 import os
 import dicom
 import re
-import pd
+import pandas as pd
 import getpass
-from backUp import getName, maxGroupNum
 
 class subject(object):
-    def __init__(self, input):
-        self.location = input
+    def __init__(self, subjectDir, dbLoc):
+        self.location = subjectDir
 
         dicomDirDict = {}
         for root, dirs, files in os.walk(self.location):
@@ -17,6 +17,7 @@ class subject(object):
                     dicoms.append(os.path.join(root,oneFile))
             if not dicoms == [] : dicomDirDict[root] = dicoms
 
+        
         self.dicomDirs = dicomDirDict
         self.dirs = dicomDirDict.keys()
         self.allDicoms = reduce(lambda x, y: x + y, dicomDirDict.values())
@@ -24,6 +25,7 @@ class subject(object):
         self.dirDicomNum = [(x,len(y)) for (x,y) in dicomDirDict.iteritems()]
         self.firstDicom = self.allDicoms[0]
         self.modalityMapping = [modalityMapping(x) for x in self.dirs]
+        self.modalityDicomNum = dict(zip(self.modalityMapping, [x[1] for x in self.dirDicomNum]))
 
         ds = dicom.read_file(self.firstDicom)
         self.age = re.search('^0(\d{2})Y',ds.PatientAge).group(1)
@@ -37,24 +39,33 @@ class subject(object):
         self.date = ds.StudyDate
         self.experimenter = getpass.getuser()
 
+        print 'Now collecting information for'
+        print '=============================='
+        print '\n\t'.join([self.location, self.fullname, self.initial, self.id, self.dob, 
+                           self.date, self.sex, ', '.join(self.modalityMapping),
+                           'by ' + self.experimenter])
+        print '=============================='
+
+        self.koreanName = raw_input('Korean name  ? eg. 김민수: ')
         self.note = raw_input('Any note ? : ')
         self.group = raw_input('Group ? : ')
-        self.number_for_group = maxGroupNum('/Volumes/promise/CCNC_MRI_3T/CHR')
+        self.numberForGroup = maxGroupNum(os.path.join(dbLoc, self.group))
         self.study = raw_input('Study name ? : ')
 
         self.timeline = raw_input('baseline or follow up ? eg) baseline or 2yfu : ')
         if self.timeline != 'followUp':
-            df = pd.ExcelFile('/Volumes/promise/nas_BackUp/CCNC_MRI_3T/database/database.xls').parse(0)
-            self.folderNames = df.ix[(df.timeline=='baseline') & (df.patientNumber == int(self.id)), 
+            df = pd.ExcelFile(os.path.join(dbLoc,'database','database.xls')).parse(0)
+            self.folderName = df.ix[(df.timeline=='baseline') & (df.patientNumber == int(self.id)), 
                                      'folderName'].get_values().tostring()
-            if self.folderName == '':
-                self.folderName = self.group + self.initial + '_' + self.number_for_group
-        else:
-            self.folderName = self.group + self.initial + '_' + self.number_for_group
 
-        self.target_dir = os.path.join('/Volumes/promise/CCNC_MRI_3T/',
+            if self.folderName == '':
+                self.folderName = self.group + self.initial + '_' + self.numberForGroup
+        else:
+            self.folderName = self.group + self.initial + '_' + self.numberForGroup
+
+        self.targetDir = os.path.join(dbLoc,
                 self.group,
-                self.group + self.initial + '_' + self.number_for_group,
+                self.group + self.numberForGroup + '_' + self.initial,
                 self.timeline)
 
 def modalityMapping(directory):
@@ -80,3 +91,22 @@ def modalityMapping(directory):
         except:
             pass
     return directory
+
+
+def maxGroupNum(backUpTo):
+    maxNumPattern=re.compile('\d+')
+
+    mx = 0
+    for string in maxNumPattern.findall(' '.join(os.listdir(backUpTo))):
+        if int(string) > mx:
+            mx = int(string)
+
+    highest = mx +1
+
+    if highest<10:
+        highest ='0'+str(highest)
+    else:
+        highest = str(highest)
+
+    return highest
+

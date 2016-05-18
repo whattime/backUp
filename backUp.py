@@ -21,7 +21,6 @@ import motion_extraction
 import freesurfer
 import freesurfer_summary
 import subject as subj
-#from subject import subject
 
 # scp modules for network dual back up
 import getpass
@@ -48,10 +47,18 @@ def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo, DataBaseAddress, spreads
 
     subjectClassList = []
     for newDirectory in newDirectoryList:
-        subjClass = subj.subject(newDirectory)
-        subjectClassList.append(subjClass)
+        subjClass = subj.subject(newDirectory, backUpTo)
+        subjectClassList.append(subjClass, backUpTo)
+
         if args.executeCopy:
             executeCopy(subjClass)
+
+            subjDf = saveLog(subjClass)
+
+            dbDf = processDB(DataBaseAddress)
+            newDf = pd.concat([dbDf, subjDf])
+            newDf.to_excel(DataBaseAddress, 'Sheet1')
+            os.chmod(DataBaseAddress, 0o2770)
 
             class spreadsheetInput():
                 def __init__(self):
@@ -63,25 +70,27 @@ def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo, DataBaseAddress, spreads
 
     if args.motion:
         print 'Now, running motion_extraction'
-        for subject,infoList in allInfo.iteritems():
+        for subjectClass in subjectClassList:
             #copiedDir=os.path.join(infoList[4],infoList[8],infoList[1])
-            copiedDir=infoList[8]
+            copiedDir=subjectClass.targetDir
             motion_extraction.to_nifti(copiedDir,False)
             motion_extraction.to_afni_format(copiedDir)
             motion_extraction.slice_time_correction(copiedDir)
             motion_extraction.motion_correction(copiedDir)
             motion_extraction.make_graph(copiedDir)
 
-    if args.freesurfer:
-        class fs_args():
-            pass
+    if args.nasBackup:
+        server = '147.47.228.192'
+        for subjectClass in subjectClassList:
+            copiedDir=subjectClass.targetDir
+            server_connect(server, copiedDir)
 
-        class fs_summary_args():
-            pass
-        
-        for subject,infoList in allInfo.iteritems():
+    print 'Completed\n'
+
+    if args.freesurfer:
+        for subjectClass in subjectClassList:
             #copiedDir=os.path.join(infoList[4],infoList[8],infoList[1])
-            copiedDir=infoList[8]
+            copiedDir=subjectClass.targetDir
             print copiedDir
             fs.directory = copiedDir
             fs.nifti = True
@@ -90,62 +99,16 @@ def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo, DataBaseAddress, spreads
             fs.output = os.path.join(copiedDir,'FREESURFER')
 
             freesurfer(fs_args)
-
-
-            fs_summary_args.subject_loc = copiedDir
-            fs_summary_args.backgrounds = None
-            fs_summary_args.roi_list = "ctx_lh_G_cuneus"
-            fs_summary_args.meanDfLoc = True
-            fs_summary_args.verbose = True
-            fs_summary_args.brain = True
-
-            
-            freesurfer_summary.main(fs_summary_args.subject_loc,
-                    fs_summary_args.backgrounds,
-                    fs_summary_args.roi_list,
-                    fs_summary_args.meanDfLoc,
-                    fs_summary_args.verbose,
-                    fs_summary_args.brain)
+            freesurfer_summary.main(copiedDir, None, "ctx_lh_G_cuneus", True, True, True)
 
     print 'Completed\n'
     
-    if args.nasBackup:
-        server = '147.47.228.192'
-        for subject,infoList in allInfo.iteritems():
-            #copiedDir=os.path.join(infoList[4],infoList[8],infoList[1])
-            copiedDir=infoList[8]
-            server_connect(server, copiedDir)
-
-    print completed
-
 
 
 def noCall(logDf,backUpFrom,folderName):
     logDf = pd.concat([logDf,pd.DataFrame.from_dict({'directoryName':folderName,'backedUpBy':getpass.getuser(),'backedUpAt':time.ctime()},orient='index').T])
     return logDf
 
-def changeencode(data, cols):
-    for col in cols:
-        data[col] = data[col].str.decode('iso-8859-1').str.encode('utf-8')
-    return data
-
-def getDicomInfoAuto(firstDicomAddress):
-    try:
-        df = dicom.read_file(firstDicomAddress)
-        dob = df.PatientBirthDate
-        sex = df.PatientSex
-        pID = df.PatientID
-        date = df.StudyDate
-        age,dob,date = calculate_age2(dob,date)
-        name = df.PatientName
-        return {'name':name,'dob':dob,
-                'sex':sex, 'patientId':pID,
-                'scanDate':date, 'age':age,'dicomRead':df}
-    except:
-        dicom.read_file(firstDicomAddress,force=True)
-        print 'cannot properly read dicom file'
-
-# In[324]:
 
 def copiedDirectoryCheck(backUpFrom,logFileInUSB):
     if os.path.isfile(logFileInUSB):
@@ -156,8 +119,6 @@ def copiedDirectoryCheck(backUpFrom,logFileInUSB):
 
     return df
 
-
-# In[325]:
 
 def newDirectoryGrep(inputDirs, backUpFrom,logDf):
     '''
@@ -206,13 +167,6 @@ def newDirectoryGrep(inputDirs, backUpFrom,logDf):
     print toBackUp
     return toBackUp,logDf
 
-
-def noCall(logDf,backUpFrom,folderName):
-    logDf = pd.concat([logDf,pd.DataFrame.from_dict({'directoryName':folderName,'backedUpBy':getpass.getuser(),'backedUpAt':time.ctime()},orient='index').T])
-    return logDf
-
-
-# In[326]:
 
 def findDtiDkiT1restRest2(newDirectoryList):
     '''
@@ -294,138 +248,6 @@ def findDtiDkiT1restRest2(newDirectoryList):
     return foundDict
 
 
-# In[358]:
-
-def getName(subjFolder):
-    '''
-    will try getting the name and subj number from the source folder first
-    if it fails,
-    will require user to type in the subjs' name
-    '''
-    if re.findall('\d{8}',os.path.basename(subjFolder)):
-        patientNumber = re.search('(\d{8})',os.path.basename(subjFolder)).group(0)
-        subjName = re.findall('[^\W\d_]+',os.path.basename(subjFolder))
-
-        #Appending first letters
-        subjInitial=''
-        for i in subjName:
-            subjInitial = subjInitial + i[0]
-
-        fullname=''
-        for i in subjName:
-            fullname = fullname + i[0] + i[1:].lower()
-
-        return subjInitial, fullname, patientNumber
-
-    #if the folder shows no pattern
-    else:
-        subjName = raw_input('\tEnter the name of the subject in English eg.Cho Kang Ik:')
-        patientNumber = raw_input("\tEnter subject's 8digit number eg.45291835:")
-
-        subjwords=subjName.split(' ')
-        fullname=''
-        subjInitial=''
-        for i in subjwords:
-            fullname=fullname + i[0].upper()
-            fullname=fullname + i[1:]
-            subjInitial=subjInitial+i[0][0][0]
-        return subjInitial.upper(),fullname,patientNumber
-
-def maxGroupNum(backUpTo):
-    maxNumPattern=re.compile('\d+')
-
-    mx = 0
-    for string in maxNumPattern.findall(' '.join(os.listdir(backUpTo))):
-        if int(string) > mx:
-            mx = int(string)
-
-    highest = mx +1
-
-    if highest<10:
-        highest ='0'+str(highest)
-    else:
-        highest = str(highest)
-
-    return highest
-
-
-
-
-def getTargetLocation(subject,group,timeline,backUpTo,df):
-    maxNum=maxGroupNum(os.path.join(backUpTo,group))
-    subjInitial,fullname,patientNumber=getName(subject)
-    target=os.path.join(backUpTo,group)
-    if timeline=='baseline':
-        targetDirectory='{0}{1}_{2}'.format(group,maxNum,subjInitial)
-    else:
-        previousInfo = df[df.patientNumber==int(patientNumber)]
-        print previousInfo[['DOB','koreanName','subjectName','folderName']]
-        if raw_input('\tDoes above contain the same subject information as the current one ? [Y/N] : ').upper() == 'Y':
-            previousDir = previousInfo.folderName.values[0]
-            print 'previousDir :', previousDir
-            print 'previousDir :', previousDir
-            print 'previousDir :', previousDir
-            print 'previousDir :', previousDir
-
-            targetDirectory=os.path.join(backUpTo,group,previousDir,timeline)
-
-    return target,subjInitial,fullname,patientNumber,targetDirectory,maxNum
-
-
-def getDOB_NOTE():
-        birthday=raw_input('\tDate of birth? [yyyy-mm-dd] : ')
-        note=raw_input('\tAny note ? :')
-
-        return birthday,note
-
-def getSex():
-        sex=raw_input('\tSex ? [ M / F ] : ')
-        return sex.upper()
-
-def getKoreanName():
-    koreanName = raw_input('\tKorean name ? [ eg) 조강익 or 윤영우1 ] ')
-    return unicode(koreanName, "utf-8")
-
-def studyName():
-    studyName=raw_input('\tStudy name ? [ default : enroll, eg) "PET", "meditation", "IDP" ] ')
-    if studyName=='':
-        studyName='enroll'
-    return studyName
-
-def getGroup():
-    possibleGroups = str('BADUK,PET,CHR,DNO,EMO,FEP,GHR,NOR,OCM,ONS,OXY,PAIN,SPR,UMO,IGD,IGH,AUD,ETC').split(',')
-    subjectNameWithGroup={}
-
-    groupName=raw_input('\twhich group ? [BADUK/PET/CHR/DNO/EMO/FEP/GHR/NOR/OCM/ONS/OXY/PAIN/SPR/UMO/IGH/IGD/AUD/ETC] :')
-    timeline=raw_input('\tfollow up (if follow up, type the period) ? [baseline/period] :')
-    groupName = groupName.upper()
-
-    if groupName not in possibleGroups:
-        print 'not in groups, let Dahye know.'
-        groupName=''
-
-    if groupName == 'BADUK':
-        followUp=raw_input('\tCNT / PRO ? :')
-
-    return groupName,timeline
-
-
-def calculate_age2(born,scanDate):
-    j = str(int(scanDate))
-    i = str(int(born))
-
-    today = datetime.datetime(year=int(j[:4]), month=int(j[4:6]), day=int(j[6:8]))
-    born = datetime.datetime(year=int(i[:4]), month=int(i[4:6]), day=int(i[6:8]))
-
-    try:
-        birthday = born.replace(year=today.year)
-    except ValueError: # raised when birth date is February 29 and the current year is not a leap year
-        birthday = born.replace(year=today.year, day=born.day-1)
-    if birthday > today:
-        return today.year - born.year - 1, born, today
-    else:
-        return today.year - born.year, born, today
-
 def calculate_age(born,today):
     try:
         birthday = born.replace(year=today.year)
@@ -435,7 +257,6 @@ def calculate_age(born,today):
         return today.year - born.year - 1
     else:
         return today.year - born.year
-
 
 def checkFileNumbers(modalityAndLocationFromOneSubject):
     #Make a checking list
@@ -467,22 +288,6 @@ def checkFileNumbers(modalityAndLocationFromOneSubject):
                 sys.exit(0)
 
 
-def dicomNumberCheckInDictionary(allModalityWithLocation):
-    checkList={'T1':208,'DTI':65,'DKI':151,'REST':4060,'REST2':152,'REST2BADUK':3132,'T2TSE':25,'T2FLAIR':25,'DTI_EXP':40,'DTI_FA':40,'DTI_COLFA':40,'DKI_EXP':200,'DKI_FA':40,'DKI_COLFA':40}
-
-    for aModalityWithLocation in allModalityWithLocation:
-        #If it is normal modality
-        if aModalityWithLocation[0] in checkList.keys():
-            if len(os.listdir(aModalityWithLocation[1]))==checkList[aModalityWithLocation[0]]:
-                print '{0} number : checked'.format(aModalityWithLocation[0])
-            else:
-                print '{0} number is not matched. It has {1} files'.format(
-                        aModalityWithLocation[0],len(os.listdir(aModalityWithLocation[1])))
-        #If it's new modality
-        else:
-            print '{0} is new, it has {1} files in the directory'.format(
-                    aModalityWithLocation[0],len(os.listdir(aModalityWithLocation[1])))
-
 
 def executeCopy(subjClass):
     print '-----------------'
@@ -491,27 +296,13 @@ def executeCopy(subjClass):
 
     #If it's follow up (the name exists)
     #infoList[-1] : koreanName
-        for modality,modalityInfo in infoList[10].iteritems():
-            #group + previousdir + follow up period(saved in the variable baseline)
-            modalityTarget=os.path.join(infoList[4],infoList[8])
-            print 'Copying {}'.format(modality)
-            os.system('mkdir -p {0}'.format(modalityTarget))
-            shutil.copytree(modalityInfo[0],os.path.join(modalityTarget,modality))
+    for source, modality in zip(subjClass.dirs, subjClass.modalityMapping):
+        print 'Copying {}'.format(modality)
+        modalityTarget = os.path.join(subjClass.targetDir, modality)
+        os.system('mkdir -p {0}'.format(modalityTarget))
+        shutil.copytree(subjClass.dirs, modalityTarget)
 
 
-
-                modalityTarget=os.path.join(allInfo[subject][4],allInfo[subject][8],'baseline')
-                print modalityTarget
-                print 'Copying {}'.format(modality)
-                os.system('mkdir -p {0}'.format(modalityTarget))
-                shutil.copytree(modalityInfo[0],os.path.join(modalityTarget,modality))
-
-    subjectDf = newDf[subject]
-    subjectDf.to_csv(os.path.join(modalityTarget,'log.txt'),sep='\t',encoding='utf-8')
-
-
-
-# In[308]:
 def processDB(DataBaseAddress):
     if os.path.isfile(DataBaseAddress):
         excelFile = pd.ExcelFile(DataBaseAddress)
@@ -540,85 +331,25 @@ def processDB(DataBaseAddress):
                                     )
     return df
 
-def verifyNumbersAndLog(foundDict,backUpTo,backUpFrom, DataBaseAddress):
+def saveLog(sub):
+    df = makeLog(sub.koreanName, sub.group, sub.timeline, sub.dob, sub.note,
+                 sub.initial, sub.fullname, sub.sex, sub.id, sub.study,
+                 sub.date, sub.modalityDicomNum, sub.experimenter)
+    df.to_csv(sub.targetDir, 'log.txt')
+    return df
 
-    #{subject:{'T1':['source','file number'],'DTI':['source','file number'],...},subject2:{...}}
-    allInfo={}
-    df = processDB(DataBaseAddress)
-    newDfList = {}
-    #for each subjects
-    for subject,allModalityWithLocation in foundDict.iteritems():
-        #allModalityWithLocation
-        #{'T1':['source','file number'],'DTI':['source','file number']}
-        print '----------------------------------------'
-        print subject
-        print '----------------------------------------'
-
-        modalityToRecheck=[]
-        modalityConfirmed=[]
-
-        checkFileNumbers(allModalityWithLocation)
-
-        #Group, followUp(baseline,followup,CNT,PRO)
-        koreanName = getKoreanName()
-        group,timeline=getGroup()
-        birthday,note=getDOB_NOTE()
-        sex=getSex()
-        studyname = studyName()
-
-        target,subjInitial,fullname,subjNum,targetDirectory,maxNum=getTargetLocation(subject,group,timeline,backUpTo,df)
-        os.mkdir(os.path.join(target,targetDirectory))
-
-#        print '\n\n\n-----------------'
-#        print group,timeline,birthday,note,target,subjInitial,fullname,subjNum,targetDirectory,sex,allModalityWithLocation,maxNum,backUpTo,backUpFrom
-#        print '-----------------\n\n\n'
-
-        allInfoDf = log(subject,koreanName,group,timeline,birthday,note,target,subjInitial,fullname,subjNum,studyname,targetDirectory,sex,allModalityWithLocation,maxNum,backUpTo,backUpFrom)
-
-        newDfList[subject]=allInfoDf
-
-
-        df = pd.concat([df,allInfoDf])
-        df = df[['koreanName','subjectName','subjectInitial','group','sex','age','DOB','scanDate','timeline','studyname','patientNumber',
-                 'T1Number','DTINumber','DKINumber','RESTNumber','REST2Number','folderName','backUpBy','note']]
-        df = df.reset_index().drop('index',axis=1)
-
-
-        allInfo[subject]=[group,timeline,birthday,note,target,subjInitial,fullname,subjNum,targetDirectory,sex,allModalityWithLocation,maxNum,backUpTo,backUpFrom,koreanName]
-
-    return allInfo,df,newDfList
-
-
-# In[309]:
-
-def log(subject,koreanName,group,timeline,birthday,note,target,subjInitial,fullname,subjNum,studyname,targetDirectory,sex,allModalityWithLocation,maxNum,backUpTo,backUpFrom):
-
-    #birthday
-    dateOfBirth=date(int(birthday.split('-')[0]),int(birthday.split('-')[1]),int(birthday.split('-')[2]))
-
-    #directory made at
-    #{'T1':['source','file number'],'DTI':['source','file number']}
-    sourceTime=os.stat(allModalityWithLocation.values()[0][0]).st_ctime
-    sourceDate=time.gmtime(sourceTime)
-    formalSourceDate=date(sourceDate[0],sourceDate[1],sourceDate[2])
-
-    #Age calculation
+def makeLog(koreanName,group,timeline,dob,note,subjInitial,fullname,sex,subjNum,studyname,scanDate, modalityCount, user):
+    dateOfBirth=date(int(dob[:4]),int(dob[4:6]), int(dob[6:]))
+    formalSourceDate=date(int(scanDate[:4]),int(scanDate[4:6]), int(scanDate[6:]))
     age = calculate_age(dateOfBirth,formalSourceDate)
 
     #Image numbers
     imageNumbers={}
     for image in 'T1','DTI','DKI','REST','T2FLAIR','T2TSE','REST2':
         try:
-            imageNumbers[image]=allModalityWithLocation[image][1]
+            imageNumbers[image]=modalityCount[image]
         except:
             imageNumbers[image]=''
-
-
-    user=getpass.getuser()
-    currentTime=time.ctime()
-    destination=os.path.join(target,targetDirectory)
-
-
 
     #new dictionary
     allInfoRearranged = {}
@@ -630,17 +361,16 @@ def log(subject,koreanName,group,timeline,birthday,note,target,subjInitial,fulln
     allInfoRearranged['sex']=sex
     allInfoRearranged['timeline']=timeline
     allInfoRearranged['studyname']=studyname
-
     allInfoRearranged['DOB']=dateOfBirth.isoformat()
-
-    #**스캔데이트를 dicom에서 얻어오는 방법 ?
     allInfoRearranged['scanDate']=formalSourceDate.isoformat()
     allInfoRearranged['age']=age
+
     allInfoRearranged['T1Number']= imageNumbers['T1']
     allInfoRearranged['DTINumber']=imageNumbers['DTI']
     allInfoRearranged['DKINumber']=imageNumbers['DKI']
     allInfoRearranged['RESTNumber']=imageNumbers['REST']
     allInfoRearranged['REST2Number']=imageNumbers['REST2']
+
     allInfoRearranged['note']=note
     allInfoRearranged['patientNumber']=subjNum
     allInfoRearranged['folderName']=targetDirectory
@@ -649,10 +379,6 @@ def log(subject,koreanName,group,timeline,birthday,note,target,subjInitial,fulln
     allInfoDf = pd.DataFrame.from_dict(allInfoRearranged,orient='index').T
     return allInfoDf
 
-
-
-
-#def networkCopy(allInfoDf):
 
 def server_connect(server, data_from):
     ssh = SSHClient()
