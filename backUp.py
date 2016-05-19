@@ -29,13 +29,13 @@ def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo, DataBaseAddress, spreads
     # External HDD log
     if USBlogFile:
         logFileInUSB = USBlogFile
-    elif args.inputDirs:
+    elif inputDirs:
         logFileInUSB = os.path.join(os.getcwd(),"log.xlsx")
     else:
         logFileInUSB = os.path.join(backUpFrom,"log.xlsx")
 
     logDf = copiedDirectoryCheck(backUpFrom,logFileInUSB)
-    newDirectoryList,logDf = newDirectoryGrep(args.inputDirs, backUpFrom,logDf)
+    newDirectoryList,logDf = newDirectoryGrep(inputDirs, backUpFrom,logDf)
     logDf.to_excel(logFileInUSB,'Sheet1')
 
     if newDirectoryList==[]:
@@ -47,7 +47,7 @@ def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo, DataBaseAddress, spreads
         checkFileNumbers(subjClass)
         subjectClassList.append(subjClass, backUpTo)
 
-        if args.executeCopy:
+        if executeCopy:
             executeCopy(subjClass)
             subjDf = saveLog(subjClass)
             dbDf = processDB(DataBaseAddress)
@@ -60,36 +60,29 @@ def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo, DataBaseAddress, spreads
             updateSpreadSheet.main(False, database, spreadsheet)
 
 
-    if args.motion:
+    if motion:
         print 'Now, running motion_extraction'
         for subjectClass in subjectClassList:
             motion_extraction.main(subjectClass.targetDir, True, True, False)
 
-    if args.nasBackup:
+    if nasBackup:
         server = '147.47.228.192'
         for subjectClass in subjectClassList:
-            copiedDir=subjectClass.targetDir
+            copiedDir=os.path.dirname(subjectClass.targetDir)
             server_connect(server, copiedDir)
 
     print 'Completed\n'
 
-    if args.freesurfer:
+    if freesurfer:
         for subjectClass in subjectClassList:
-            #copiedDir=os.path.join(infoList[4],infoList[8],infoList[1])
-            copiedDir=subjectClass.targetDir
-            print copiedDir
-            fs.directory = copiedDir
-            fs.nifti = True
-            fs.file_input = False
-            fs.cwd = False
-            fs.output = os.path.join(copiedDir,'FREESURFER')
-
-            freesurfer(fs_args)
-            freesurfer_summary.main(copiedDir, None, "ctx_lh_G_cuneus", True, True, True)
-
+            freesurfer.main(True, 
+                    False, 
+                    False, 
+                    subjectClass.targetDir, 
+                    os.path.join(subjectClass.targetDir, 'FREESURFER'))
+            freesurfer_summary.main(copiedDir, None, "ctx_lh_G_cuneus", True, True, True, True)
     print 'Completed\n'
     
-
 
 def noCall(logDf,backUpFrom,folderName):
     logDf = pd.concat([logDf,pd.DataFrame.from_dict({'directoryName':folderName,'backedUpBy':getpass.getuser(),'backedUpAt':time.ctime()},orient='index').T])
@@ -306,7 +299,7 @@ def server_connect(server, data_from):
     with SCPClient(ssh.get_transport()) as scp:
         print 'Connected to {server} and copying data'.format(server=server)
         print '\t',data_from,'to',server+'@'+data_to
-        scp.put(data_from, data_to, recursive=True)
+        scp.put(data_from, data_to, recursive=True, preserve_times=True)
 
 
 if __name__ == '__main__':

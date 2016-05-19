@@ -13,15 +13,14 @@ import grp
 import getpass
 
 
-def main(args):
-    sourceFile = pd.ExcelFile(args.database)
+def main(study, database, target):
+    sourceFile = pd.ExcelFile(database)
     
     sourceDf = sourceFile.parse(sourceFile.sheet_names[0])
-    target = args.outExcel
     os.remove(target)
 
     try:
-        if args.study:
+        if study:
             updateSpreadSheet(sourceDf,target,'studyName')
         else:
             updateSpreadSheet(sourceDf,target,'group')
@@ -141,5 +140,5 @@ if __name__=='__main__':
 
     args = parser.parse_args()
     print args.study
-    main(args)
+    main(args.study, args.database, args.outExcel)
 
