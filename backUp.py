@@ -185,7 +185,9 @@ def checkFileNumbers(subjClass):
                 print '\tExit due to unmatching file number'
                 sys.exit(0)
         else:
-            print '{modality} : {fileCount} - check'
+            print 'Correct dicom number - \t {modality} : {fileCount}'.format(
+                    modality=modality,
+                    fileCount=fileCount)
 
 
 
