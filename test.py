@@ -57,12 +57,17 @@ print len(a.allDicoms)
 #print a.dirDicomNum
 
 
-print a.modalityMapping
-print a.dicomDirs
-print a.dirDicomNum
-print a.modalityMapping
-print a.dirs
-print a.targetDir
-print a.dob
-print a.date
+#print a.modalityMapping
+#print a.dicomDirs
+#print a.dirDicomNum
+#print a.modalityMapping
+#print a.dirs
+#print a.targetDir
+#print a.dob
+#print a.date
+
+
+import backUp
+
+backUp.checkFileNumbers(a)
 
