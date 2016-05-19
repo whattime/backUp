@@ -5,17 +5,11 @@ import time
 from datetime import date
 import sys
 import os
-import tree
 import shutil
-import getpass
-import pickle
 from progressbar import AnimatedMarker,ProgressBar,Percentage,Bar
-import glob
 import argparse
 import textwrap
-import collections
 import pandas as pd
-import dicom
 import updateSpreadSheet
 import motion_extraction
 import freesurfer
