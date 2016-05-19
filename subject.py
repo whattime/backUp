@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
+from __future__ import division
 import os
 import dicom
 import re
 import pandas as pd
 import getpass
-from progressbar import AnimatedMarker,ProgressBar,Percentage,Bar
 
 class subject(object):
     def __init__(self, subjectDir, dbLoc):
@@ -13,17 +13,12 @@ class subject(object):
 
         dicomDirDict = {}
 
-        pbar = ProgressBar().start()
-        accNum = 1
         for root, dirs, files in os.walk(self.location):
             dicoms = []
             for oneFile in files:
                 if re.search('(dcm|ima)', oneFile, re.IGNORECASE):
                     dicoms.append(os.path.join(root,oneFile))
             if not dicoms == [] : dicomDirDict[root] = dicoms
-            pbar.update(accNum)
-            accNum += 5
-        pbar.finish()
 
         self.dicomDirs = dicomDirDict
         self.dirs = dicomDirDict.keys()
@@ -60,15 +55,15 @@ class subject(object):
         self.study = raw_input('Study name ? : ')
 
         self.timeline = raw_input('baseline or follow up ? eg) baseline or 2yfu : ')
-        if self.timeline != 'followUp':
+        if self.timeline != 'baseline':
             df = pd.ExcelFile(os.path.join(dbLoc,'database','database.xls')).parse(0)
             self.folderName = df.ix[(df.timeline=='baseline') & (df.patientNumber == int(self.id)), 
                                      'folderName'].get_values().tostring()
 
             if self.folderName == '':
-                self.folderName = self.group + self.initial + '_' + self.numberForGroup
+                self.folderName = self.group + self.numberForGroup + '_' + self.initial
         else:
-            self.folderName = self.group + self.initial + '_' + self.numberForGroup
+            self.folderName = self.group + self.numberForGroup + '_' + self.initial
 
         self.targetDir = os.path.join(dbLoc,
                 self.group,
