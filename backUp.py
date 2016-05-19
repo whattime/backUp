@@ -1,5 +1,6 @@
 #!/ccnc_bin/venv/bin/python
 # -*- coding: utf-8 -*-
+from __future__ import division
 import re
 import time
 from datetime import date
@@ -15,6 +16,7 @@ import motion_extraction
 import freesurfer
 import freesurfer_summary
 import subject as subj
+
 
 # scp modules for network dual back up
 import getpass
@@ -47,9 +49,7 @@ def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo, DataBaseAddress, spreads
 
         if args.executeCopy:
             executeCopy(subjClass)
-
             subjDf = saveLog(subjClass)
-
             dbDf = processDB(DataBaseAddress)
             newDf = pd.concat([dbDf, subjDf])
             newDf.to_excel(DataBaseAddress, 'Sheet1')
@@ -187,7 +187,8 @@ def checkFileNumbers(subjClass):
             'DTI_COLFA':40,
             'DKI_EXP':200,
             'DKI_FA':40,
-            'DKI_COLFA':40}
+            'DKI_COLFA':40,
+            'SCOUT':9}
 
     #Check whether they have right numbers
     for modality, (modalityLocation, fileCount) in zip(subjClass.modalityMapping, subjClass.dirDicomNum):
@@ -205,22 +206,22 @@ def checkFileNumbers(subjClass):
 
 def executeCopy(subjClass):
     print '-----------------'
-    print 'Copying',subject
+    print 'Copying', subjClass.koreanName
     print '-----------------'
 
-    pbar=ProgressBar().start()
     totalNum = subjClass.allDicomNum
     accNum = 0
+    pbar=ProgressBar().start()
     for source, modality, num in zip(subjClass.dirs, 
                                      subjClass.modalityMapping, 
                                      subjClass.modalityDicomNum.values()):
 
-        print 'Copying {}'.format(modality)
+        os.system('mkdir -p {0}'.format(subjClass.targetDir))
+
         modalityTarget = os.path.join(subjClass.targetDir, modality)
-        os.system('mkdir -p {0}'.format(modalityTarget))
-        shutil.copytree(subjClass.dirs, modalityTarget)
+        shutil.copytree(source, modalityTarget)
         accNum += num
-        pbar.update(accNum/totalNum * 100)
+        pbar.update((accNum/totalNum) * 100)
     pbar.finish()
 
 
@@ -314,17 +315,6 @@ def server_connect(server, data_from):
         print '\t',data_from,'to',server+'@'+data_to
         scp.put(data_from, data_to)
 
-
-
-def walklevel(some_dir, level=1):
-    some_dir = some_dir.rstrip(os.path.sep)
-    assert os.path.isdir(some_dir)
-    num_sep = some_dir.count(os.path.sep)
-    for root, dirs, files in os.walk(some_dir):
-        yield root, dirs, files
-        num_sep_this = root.count(os.path.sep)
-        if num_sep + level <= num_sep_this:
-            del dirs[:]
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
