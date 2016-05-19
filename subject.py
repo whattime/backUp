@@ -4,20 +4,27 @@ import dicom
 import re
 import pandas as pd
 import getpass
+from progressbar import AnimatedMarker,ProgressBar,Percentage,Bar
 
 class subject(object):
     def __init__(self, subjectDir, dbLoc):
         self.location = subjectDir
 
+
         dicomDirDict = {}
+
+        pbar = ProgressBar().start()
+        accNum = 1
         for root, dirs, files in os.walk(self.location):
             dicoms = []
             for oneFile in files:
                 if re.search('(dcm|ima)', oneFile, re.IGNORECASE):
                     dicoms.append(os.path.join(root,oneFile))
             if not dicoms == [] : dicomDirDict[root] = dicoms
+            pbar.update(accNum)
+            accNum += 5
+        pbar.finish()
 
-        
         self.dicomDirs = dicomDirDict
         self.dirs = dicomDirDict.keys()
         self.allDicoms = reduce(lambda x, y: x + y, dicomDirDict.values())

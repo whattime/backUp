@@ -167,87 +167,6 @@ def newDirectoryGrep(inputDirs, backUpFrom,logDf):
     print toBackUp
     return toBackUp,logDf
 
-
-def findDtiDkiT1restRest2(newDirectoryList):
-    '''
-    dictionary {subject:{t1:t1location,DTI:DTIlocation,...}}
-    '''
-
-    # Regrex compilers
-    t1 = re.compile(r'tfl|[^s]t1',re.IGNORECASE)
-    dti = re.compile(r'dti\S*\(.\)_\d+\S*',re.IGNORECASE)
-    dtiFA = re.compile(r'dti.*[^l]fa',re.IGNORECASE)
-    dtiEXP = re.compile(r'dti.*exp',re.IGNORECASE)
-    dtiCOLFA = re.compile(r'dti.*colfa',re.IGNORECASE)
-    dki = re.compile(r'dki\S*\(.\)_\d+\S*',re.IGNORECASE)
-    dkiFA = re.compile(r'dki.*[^l]fa',re.IGNORECASE)
-    dkiEXP = re.compile(r'dki.*exp',re.IGNORECASE)
-    dkiCOLFA = re.compile(r'dki.*colfa',re.IGNORECASE)
-    rest = re.compile(r'rest|rest\S*4060',re.IGNORECASE)
-    t2flair = re.compile(r'flair',re.IGNORECASE)
-    t2tse = re.compile(r'tse',re.IGNORECASE)
-
-
-    foundDict={}
-    #nameDictionary={t1:'T1',rest:'REST',t2flair:'T2FLAIR',t2tse:'T2TSE',dtiFA:'DTI_FA',dtiEXP:'DTI_EXP',dtiCOLFA:'DTI_COLFA',dkiFA:'DKI_FA',dkiEXP:'DKI_EXP',dkiCOLFA:'DKI_COLFA'}
-    for sourceSubjectDIR in newDirectoryList:
-        subjectName=os.path.basename(sourceSubjectDIR)
-        #looping through the os.walk
-        foundDirectories={}
-
-        #os.walk directory output
-        osWorkOut={}
-        print('\n\t{0} : going to search & match'.format(subjectName))
-
-        num=1
-        pbar=ProgressBar().start()
-        for root, dirs, files in walklevel(sourceSubjectDIR, 3):
-            print root, num
-            pbar.update(num)
-            num+=5
-            if len(dirs)==0:
-                osWorkOut[root]=len(files)
-        pbar.finish()
-        print '\n\n'
-
-        matchCheck=[]
-        #osWorkOut = {modalityLocation:fileNumber,...}
-        for modality in (t1,'T1'),(rest,'REST'),(dki,"DKI"),(dti,'DTI'),(t2flair,'T2FLAIR'),(t2tse,'T2TSE'),(dtiFA,'DTI_FA'),(dtiEXP,'DTI_EXP'),(dtiCOLFA,'DTI_COLFA'),(dkiFA,'DKI_FA'),(dkiEXP,'DKI_EXP'),(dkiCOLFA,'DKI_COLFA'):
-
-
-            matchingSource=''.join([item for item in osWorkOut.iterkeys() if modality[0].search(item)])
-            fileNumber=osWorkOut.get(matchingSource)
-
-
-            if fileNumber:
-                #print '\t{modality}  --> {found} with {fileNumber} files'.format(modality=modality[1],
-                        #found=os.path.basename(matchingSource),
-                        #fileNumber=fileNumber)
-                foundDirectories[modality[1]]=[matchingSource,fileNumber]
-            else:
-                matchCheck.append(modality[1])
-
-        print '\n'
-        if matchCheck==[]:
-            print '\tFound every modality'
-        else:
-            print '\tMissing modalities in {subject} are :'.format(subject=subjectName)
-            for item in matchCheck:
-                print item
-
-                #User confirm for the missing modality
-                if re.search('[yY]|[yY][Ee][Ss]',raw_input('\tCheck ? [ Y / N ] : ')):
-                    print '\tOkay !'
-                else:
-                    print '\tExit due to missing modality'
-                    sys.exit(0)
-
-        foundDict[subjectName]=foundDirectories
-        #foundDict = {subjectName:{modalityName:modalitySource,fileNumber}}
-
-    return foundDict
-
-
 def calculate_age(born,today):
     try:
         birthday = born.replace(year=today.year)
@@ -294,13 +213,20 @@ def executeCopy(subjClass):
     print 'Copying',subject
     print '-----------------'
 
-    #If it's follow up (the name exists)
-    #infoList[-1] : koreanName
-    for source, modality in zip(subjClass.dirs, subjClass.modalityMapping):
+    pbar=ProgressBar().start()
+    totalNum = subjClass.allDicomNum
+    accNum = 0
+    for source, modality, num in zip(subjClass.dirs, 
+                                     subjClass.modalityMapping, 
+                                     subjClass.modalityDicomNum.values()):
+
         print 'Copying {}'.format(modality)
         modalityTarget = os.path.join(subjClass.targetDir, modality)
         os.system('mkdir -p {0}'.format(modalityTarget))
         shutil.copytree(subjClass.dirs, modalityTarget)
+        accNum += num
+        pbar.update(accNum/totalNum * 100)
+    pbar.finish()
 
 
 def processDB(DataBaseAddress):
