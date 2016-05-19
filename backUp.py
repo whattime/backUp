@@ -57,24 +57,13 @@ def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo, DataBaseAddress, spreads
             newDf.to_excel(DataBaseAddress, 'Sheet1')
             os.chmod(DataBaseAddress, 0o2770)
 
-            class spreadsheetInput():
-                def __init__(self):
-                    self.database = database
-                    self.outExcel = spreadsheet
-            us_input = spreadsheetInput()
-            updateSpreadSheet.main(us_input)
+            updateSpreadSheet.main(False, database, spreadsheet)
 
 
     if args.motion:
         print 'Now, running motion_extraction'
         for subjectClass in subjectClassList:
-            #copiedDir=os.path.join(infoList[4],infoList[8],infoList[1])
-            copiedDir=subjectClass.targetDir
-            motion_extraction.to_nifti(copiedDir,False)
-            motion_extraction.to_afni_format(copiedDir)
-            motion_extraction.slice_time_correction(copiedDir)
-            motion_extraction.motion_correction(copiedDir)
-            motion_extraction.make_graph(copiedDir)
+            motion_extraction.main(subjectClass.targetDir, True, True, False)
 
     if args.nasBackup:
         server = '147.47.228.192'
@@ -317,7 +306,7 @@ def server_connect(server, data_from):
     with SCPClient(ssh.get_transport()) as scp:
         print 'Connected to {server} and copying data'.format(server=server)
         print '\t',data_from,'to',server+'@'+data_to
-        scp.put(data_from, data_to)
+        scp.put(data_from, data_to, recursive=True)
 
 
 if __name__ == '__main__':
