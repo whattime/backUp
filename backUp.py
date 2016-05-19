@@ -184,8 +184,9 @@ def checkFileNumbers(subjClass):
             else:
                 print '\tExit due to unmatching file number'
                 sys.exit(0)
+        else:
+            print '{modality} : {fileCount} - check'
 
-    print 'Dicom number check completed'
 
 
 def executeCopy(subjClass):
