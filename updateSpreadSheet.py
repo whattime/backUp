@@ -112,6 +112,7 @@ def updateSpreadSheet(df,target,divideBy):
         dataFrame.to_excel(writer,group)
 
     writer.save()
+    os.chmod(target, 0o2775)
 
 
 
