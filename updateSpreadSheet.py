@@ -8,12 +8,17 @@ import textwrap
 import xlwt
 from xlrd import open_workbook
 from xlutils.copy import copy
+import pwd
+import grp
+import getpass
+
 
 def main(args):
     sourceFile = pd.ExcelFile(args.database)
     
     sourceDf = sourceFile.parse(sourceFile.sheet_names[0])
     target = args.outExcel
+    os.remove(target)
 
     try:
         if args.study:
@@ -25,6 +30,10 @@ def main(args):
 
     #styling
     styleUpdate(target)
+    uid = pwd.getpwnam(getpass.getuser()).pw_uid
+    gid = grp.getgrnam("ccnc_mri").gr_gid
+    os.chmod(target, 0o2775)
+    os.chown(target, uid, gid)
     print 'finished'
 
 def styleUpdate(target):
@@ -111,7 +120,6 @@ def updateSpreadSheet(df,target,divideBy):
         dataFrame.to_excel(writer,group)
 
     writer.save()
-    os.chmod(target, 0o2775)
 
 
 
@@ -132,5 +140,6 @@ if __name__=='__main__':
             default = '/ccnc/MRIspreadsheet/MRI.xls')
 
     args = parser.parse_args()
+    print args.study
     main(args)
 
