@@ -45,7 +45,7 @@ def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo, DataBaseAddress, spreads
     for newDirectory in newDirectoryList:
         subjClass = subj.subject(newDirectory, backUpTo)
         checkFileNumbers(subjClass)
-        subjectClassList.append(subjClass, backUpTo)
+        subjectClassList.append(subjClass)
 
         if executeCopy:
             executeCopy(subjClass)
@@ -71,8 +71,6 @@ def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo, DataBaseAddress, spreads
             copiedDir=os.path.dirname(subjectClass.targetDir)
             server_connect(server, copiedDir)
 
-    print 'Completed\n'
-
     if freesurfer:
         for subjectClass in subjectClassList:
             freesurfer.main(True, 
@@ -81,6 +79,7 @@ def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo, DataBaseAddress, spreads
                     subjectClass.targetDir, 
                     os.path.join(subjectClass.targetDir, 'FREESURFER'))
             freesurfer_summary.main(copiedDir, None, "ctx_lh_G_cuneus", True, True, True, True)
+
     print 'Completed\n'
     
 
@@ -186,6 +185,7 @@ def checkFileNumbers(subjClass):
                 print '\tExit due to unmatching file number'
                 sys.exit(0)
 
+    print 'Dicom number check completed'
 
 
 def executeCopy(subjClass):
