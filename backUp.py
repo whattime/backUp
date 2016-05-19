@@ -42,6 +42,7 @@ def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo, DataBaseAddress, spreads
     subjectClassList = []
     for newDirectory in newDirectoryList:
         subjClass = subj.subject(newDirectory, backUpTo)
+        checkFileNumbers(subjClass)
         subjectClassList.append(subjClass, backUpTo)
 
         if args.executeCopy:
@@ -171,7 +172,7 @@ def calculate_age(born,today):
     else:
         return today.year - born.year
 
-def checkFileNumbers(modalityAndLocationFromOneSubject):
+def checkFileNumbers(subjClass):
     #Make a checking list
     checkList={'T1':208,
             'DTI':65,
@@ -189,7 +190,7 @@ def checkFileNumbers(modalityAndLocationFromOneSubject):
             'DKI_COLFA':40}
 
     #Check whether they have right numbers
-    for modality,(modalityLocation,fileCount) in modalityAndLocationFromOneSubject.iteritems():
+    for modality, (modalityLocation, fileCount) in zip(subjClass.modalityMapping, subjClass.dirDicomNum):
         if checkList[modality]!=fileCount:
             print '{modality} numbers does not seem right !  : {fileCount}'.format(
                     modality=modality,
