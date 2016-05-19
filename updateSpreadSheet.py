@@ -10,8 +10,6 @@ from xlrd import open_workbook
 from xlutils.copy import copy
 
 def main(args):
-
-
     sourceFile = pd.ExcelFile(args.database)
     
     sourceDf = sourceFile.parse(sourceFile.sheet_names[0])
@@ -30,6 +28,7 @@ def main(args):
     print 'finished'
 
 def styleUpdate(target):
+    print target
     rb = open_workbook(target)
     wb = copy(rb)
 
@@ -126,10 +125,11 @@ if __name__=='__main__':
                     '''.format(codeName=os.path.basename(__file__))))
 
             #epilog="By Kevin, 26th May 2014")
-    parser.add_argument('-dir','--directory',help='Data directory location, default = pwd',default=os.getcwd())
     parser.add_argument('-s','--study',action='store_true',help='Divide the database by studies')
-    parser.add_argument('-d','--database', help='Database location')
-    parser.add_argument('-o','--outExcel', help='Excel spreadsheet output location')
+    parser.add_argument('-d','--database', help='Database location', 
+            default = '/Volumes/promise/nas_BackUp/CCNC_MRI_3T/database/database.xls')
+    parser.add_argument('-o','--outExcel', help='Excel spreadsheet output location',
+            default = '/ccnc/MRIspreadsheet/MRI.xls')
 
     args = parser.parse_args()
     main(args)
