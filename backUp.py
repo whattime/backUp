@@ -52,6 +52,8 @@ def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo, DataBaseAddress, spreads
             subjDf = saveLog(subjClass)
             dbDf = processDB(DataBaseAddress)
             newDf = pd.concat([dbDf, subjDf])
+            newDf['koreanName'] = newDf['koreanName'].str.decode('utf-8')
+            newDf['note'] = newDf['note'].str.decode('utf-8')
             newDf.to_excel(DataBaseAddress, 'Sheet1')
             os.chmod(DataBaseAddress, 0o2770)
 
@@ -229,6 +231,8 @@ def processDB(DataBaseAddress):
     if os.path.isfile(DataBaseAddress):
         excelFile = pd.ExcelFile(DataBaseAddress)
         df = excelFile.parse(excelFile.sheet_names[0])
+        df['koreanName'] = df.koreanName.str.encode('utf-8')
+        df['note'] = df.note.str.encode('utf-8')
     else:
         df = pd.DataFrame.from_dict({None:{'subjectName':None,
                                            'subjectInitial':None,
@@ -256,11 +260,11 @@ def processDB(DataBaseAddress):
 def saveLog(sub):
     df = makeLog(sub.koreanName, sub.group, sub.timeline, sub.dob, sub.note,
                  sub.initial, sub.fullname, sub.sex, sub.id, sub.study,
-                 sub.date, sub.modalityDicomNum, sub.experimenter)
-    df.to_csv(sub.targetDir, 'log.txt')
+                 sub.date, sub.folderName, sub.modalityDicomNum, sub.experimenter)
+    df.to_csv(os.path.join(sub.targetDir, 'log.txt'))
     return df
 
-def makeLog(koreanName,group,timeline,dob,note,subjInitial,fullname,sex,subjNum,studyname,scanDate, modalityCount, user):
+def makeLog(koreanName,group,timeline,dob,note,subjInitial,fullname,sex,subjNum,studyname,scanDate, folderName, modalityCount, user):
     dateOfBirth=date(int(dob[:4]),int(dob[4:6]), int(dob[6:]))
     formalSourceDate=date(int(scanDate[:4]),int(scanDate[4:6]), int(scanDate[6:]))
     age = calculate_age(dateOfBirth,formalSourceDate)
@@ -295,7 +299,7 @@ def makeLog(koreanName,group,timeline,dob,note,subjInitial,fullname,sex,subjNum,
 
     allInfoRearranged['note']=note
     allInfoRearranged['patientNumber']=subjNum
-    allInfoRearranged['folderName']=targetDirectory
+    allInfoRearranged['folderName']=folderName
     allInfoRearranged['backUpBy']=user
 
     allInfoDf = pd.DataFrame.from_dict(allInfoRearranged,orient='index').T
