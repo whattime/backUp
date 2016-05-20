@@ -73,11 +73,8 @@ def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo, DataBaseAddress, spreads
 
     if freesurferOn:
         for subjectClass in subjectClassList:
-            freesurfer.main(True, 
-                    False, 
-                    False, 
-                    subjectClass.targetDir, 
-                    os.path.join(subjectClass.targetDir, 'FREESURFER'))
+            freesurfer.main(subjectClass.targetDir, 
+                            os.path.join(subjectClass.targetDir, 'FREESURFER'))
             freesurfer_summary.main(copiedDir, None, "ctx_lh_G_cuneus", True, True, True, True)
 
     print 'Completed\n'
