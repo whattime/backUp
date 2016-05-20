@@ -25,7 +25,7 @@ from scp import SCPClient
 
 
 
-def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo, DataBaseAddress, spreadsheet, freesurfer, motion, copyExecute, nasBackup):
+def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo, DataBaseAddress, spreadsheet, freesurferOn, motionOn, copyExecuteOn, nasBackupOn):
     # External HDD log
     if USBlogFile:
         logFileInUSB = USBlogFile
@@ -47,7 +47,7 @@ def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo, DataBaseAddress, spreads
         checkFileNumbers(subjClass)
         subjectClassList.append(subjClass)
 
-        if copyExecute:
+        if copyExecuteOn:
             executeCopy(subjClass)
             subjDf = saveLog(subjClass)
             dbDf = processDB(DataBaseAddress)
@@ -60,18 +60,18 @@ def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo, DataBaseAddress, spreads
             updateSpreadSheet.main(False, DataBaseAddress, spreadsheet)
 
 
-    if motion:
+    if motionOn:
         print 'Now, running motion_extraction'
         for subjectClass in subjectClassList:
             motion_extraction.main(subjectClass.targetDir, True, True, False)
 
-    if nasBackup:
+    if nasBackupOn:
         server = '147.47.228.192'
         for subjectClass in subjectClassList:
             copiedDir=os.path.dirname(subjectClass.targetDir)
             server_connect(server, copiedDir)
 
-    if freesurfer:
+    if freesurferOn:
         for subjectClass in subjectClassList:
             freesurfer.main(True, 
                     False, 
