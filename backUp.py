@@ -342,7 +342,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '-d', '--database',
         help='Location of database file. Default : "/Volumes/promise/CCNC_MRI_3T/database/database.xls"',
-        default="/Volumes/promise/nas_BackUp/CCNC_MRI_3T",
+        default="/Volumes/promise/CCNC_MRI_3T/database/database.xls",
         )
     parser.add_argument(
         '-s', '--spreadsheet',
