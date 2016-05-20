@@ -55,9 +55,9 @@ def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo, DataBaseAddress, spreads
             newDf['koreanName'] = newDf['koreanName'].str.decode('utf-8')
             newDf['note'] = newDf['note'].str.decode('utf-8')
             newDf.to_excel(DataBaseAddress, 'Sheet1')
-            os.chmod(DataBaseAddress, 0o2770)
+            #os.chmod(DataBaseAddress, 0o2770)
 
-            updateSpreadSheet.main(False, database, spreadsheet)
+            updateSpreadSheet.main(False, DataBaseAddress, spreadsheet)
 
 
     if motion:
@@ -347,7 +347,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '-s', '--spreadsheet',
         help='Location of output excel file. Default : "/ccnc/MRIspreadsheet/MRI.xls"',
-        default="/ccnc/MRI.xls",
+        default="/ccnc/MRIspreadsheet/MRI.xls",
         )
 
     parser.add_argument(

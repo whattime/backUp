@@ -6,6 +6,7 @@ import re
 import pandas as pd
 import getpass
 
+from progressbar import AnimatedMarker,ProgressBar,Percentage,Bar
 class subject(object):
     def __init__(self, subjectDir, dbLoc):
         self.location = subjectDir
@@ -13,9 +14,10 @@ class subject(object):
 
         dicomDirDict = {}
 
+        pbar = ProgressBar()
         for root, dirs, files in os.walk(self.location):
             dicoms = []
-            for oneFile in files:
+            for oneFile, i in zip(files, pbar(range(6000))):
                 if re.search('(dcm|ima)', oneFile, re.IGNORECASE):
                     dicoms.append(os.path.join(root,oneFile))
             if not dicoms == [] : dicomDirDict[root] = dicoms
@@ -33,9 +35,9 @@ class subject(object):
         self.age = re.search('^0(\d{2})Y',ds.PatientAge).group(1)
         self.dob = ds.PatientBirthDate
         self.id = ds.PatientID
-        self.fullname = ds.PatientName
         self.surname = ds.PatientName.split('^')[0]
         self.name = ds.PatientName.split('^')[1]
+        self.fullname = ''.join([x[0].upper()+x[1:].lower() for x in [self.surname, self.name.split(' ')[0], self.name.split(' ')[1]]])
         self.initial = self.surname[0]+''.join([x[0] for x in self.name.split(' ')])
         self.sex = ds.PatientSex
         self.date = ds.StudyDate
