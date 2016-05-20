@@ -25,7 +25,7 @@ from scp import SCPClient
 
 
 
-def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo, DataBaseAddress, spreadsheet, freesurfer, motion, executeCopy, nasBackup):
+def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo, DataBaseAddress, spreadsheet, freesurfer, motion, copyExecute, nasBackup):
     # External HDD log
     if USBlogFile:
         logFileInUSB = USBlogFile
@@ -47,7 +47,7 @@ def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo, DataBaseAddress, spreads
         checkFileNumbers(subjClass)
         subjectClassList.append(subjClass)
 
-        if executeCopy:
+        if copyExecute:
             executeCopy(subjClass)
             subjDf = saveLog(subjClass)
             dbDf = processDB(DataBaseAddress)
