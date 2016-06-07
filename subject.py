@@ -37,8 +37,13 @@ class subject(object):
         self.id = ds.PatientID
         self.surname = ds.PatientName.split('^')[0]
         self.name = ds.PatientName.split('^')[1]
-        self.fullname = ''.join([x[0].upper()+x[1:].lower() for x in [self.surname, self.name.split(' ')[0], self.name.split(' ')[1]]])
-        self.initial = self.surname[0]+''.join([x[0] for x in self.name.split(' ')])
+        try:
+            self.fullname = ''.join([x[0].upper()+x[1:].lower() for x in [self.surname, self.name.split(' ')[0], self.name.split(' ')[1]]])
+            self.initial = self.surname[0]+''.join([x[0] for x in self.name.split(' ')])
+        except:
+            self.fullname = ''.join([x[0].upper()+x[1:].lower() for x in [self.surname, self.name]])
+            self.initial = self.surname[0]+self.name[0]
+        
         self.sex = ds.PatientSex
         self.date = ds.StudyDate
         self.experimenter = getpass.getuser()
