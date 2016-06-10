@@ -218,6 +218,10 @@ def processDB(DataBaseAddress):
         df = excelFile.parse(excelFile.sheet_names[0])
         df['koreanName'] = df.koreanName.str.encode('utf-8')
         df['note'] = df.note.str.encode('utf-8')
+
+        print 'df in processDf first parag'
+        print df
+
     else:
         df = pd.DataFrame.from_dict({None:{'subjectName':None,
                                            'subjectInitial':None,
