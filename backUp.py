@@ -49,9 +49,17 @@ def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo, DataBaseAddress, spreads
 
         if copyExecuteOn:
             executeCopy(subjClass)
+
             subjDf = saveLog(subjClass)
+            print 'subjDf at line 54'
+            print subjDf
+
             dbDf = processDB(DataBaseAddress)
+            print 'dbDf at line 57'
+            print dbDf
+
             newDf = pd.concat([dbDf, subjDf])
+
             newDf['koreanName'] = newDf['koreanName'].str.decode('utf-8')
             newDf['note'] = newDf['note'].str.decode('utf-8')
             newDf.to_excel(DataBaseAddress, 'Sheet1')
@@ -215,6 +223,10 @@ def processDB(DataBaseAddress):
         df = excelFile.parse(excelFile.sheet_names[0])
         df['koreanName'] = df.koreanName.str.encode('utf-8')
         df['note'] = df.note.str.encode('utf-8')
+
+        print 'df in processDf first parag'
+        print df
+
     else:
         df = pd.DataFrame.from_dict({None:{'subjectName':None,
                                            'subjectInitial':None,
@@ -285,6 +297,10 @@ def makeLog(koreanName,group,timeline,dob,note,subjInitial,fullname,sex,subjNum,
     allInfoRearranged['backUpBy']=user
 
     allInfoDf = pd.DataFrame.from_dict(allInfoRearranged,orient='index').T
+
+    print 'allInfoDf is'
+    allInfoDf
+
     return allInfoDf
 
 
