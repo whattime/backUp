@@ -51,7 +51,12 @@ def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo, DataBaseAddress, spreads
             executeCopy(subjClass)
 
             subjDf = saveLog(subjClass)
+            print 'subjDf at line 54'
+            print subjDf
+
             dbDf = processDB(DataBaseAddress)
+            print 'dbDf at line 57'
+            print dbDf
 
             newDf = pd.concat([dbDf, subjDf])
 
