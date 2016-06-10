@@ -288,6 +288,10 @@ def makeLog(koreanName,group,timeline,dob,note,subjInitial,fullname,sex,subjNum,
     allInfoRearranged['backUpBy']=user
 
     allInfoDf = pd.DataFrame.from_dict(allInfoRearranged,orient='index').T
+
+    print 'allInfoDf is'
+    allInfoDf
+
     return allInfoDf
 
 
