@@ -49,9 +49,12 @@ def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo, DataBaseAddress, spreads
 
         if copyExecuteOn:
             executeCopy(subjClass)
+
             subjDf = saveLog(subjClass)
             dbDf = processDB(DataBaseAddress)
+
             newDf = pd.concat([dbDf, subjDf])
+
             newDf['koreanName'] = newDf['koreanName'].str.decode('utf-8')
             newDf['note'] = newDf['note'].str.decode('utf-8')
             newDf.to_excel(DataBaseAddress, 'Sheet1')
