@@ -51,14 +51,17 @@ def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo, DataBaseAddress, spreads
             executeCopy(subjClass)
 
             subjDf = saveLog(subjClass)
-            print 'subjDf at line 54'
-            print subjDf
 
             dbDf = processDB(DataBaseAddress)
-            print 'dbDf at line 57'
-            print dbDf
 
-            newDf = pd.concat([dbDf, subjDf])
+            newDf = pd.concat([dbDf, subjDf]).reset_index()
+            newDf = newDf[[ u'koreanName',    u'subjectName', u'subjectInitial',
+                            u'group',            u'sex',            u'age',
+                            u'DOB',       u'scanDate',       u'timeline',
+                            u'studyname',  u'patientNumber',       u'T1Number',
+                            u'DTINumber',      u'DKINumber',     u'RESTNumber',
+                            u'REST2Number',     u'folderName',       u'backUpBy',
+                            u'note']]
 
             newDf['koreanName'] = newDf['koreanName'].str.decode('utf-8')
             newDf['note'] = newDf['note'].str.decode('utf-8')
@@ -297,9 +300,13 @@ def makeLog(koreanName,group,timeline,dob,note,subjInitial,fullname,sex,subjNum,
     allInfoRearranged['backUpBy']=user
 
     allInfoDf = pd.DataFrame.from_dict(allInfoRearranged,orient='index').T
-
-    print 'allInfoDf is'
-    allInfoDf
+    allInfoDf = allInfoDf[[ u'koreanName',    u'subjectName', u'subjectInitial',
+                            u'group',            u'sex',            u'age',
+                            u'DOB',       u'scanDate',       u'timeline',
+                            u'studyname',  u'patientNumber',       u'T1Number',
+                            u'DTINumber',      u'DKINumber',     u'RESTNumber',
+                            u'REST2Number',     u'folderName',       u'backUpBy',
+                            u'note']]
 
     return allInfoDf
 
