@@ -327,7 +327,7 @@ def server_connect(server, data_from):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description=textwrap.dedent('''\
             {codeName} : Copy MRI data from external hard drive to system.
                          It automatically adds logs to ccnc database.
