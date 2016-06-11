@@ -123,7 +123,8 @@ def updateSpreadSheet(df,target,divideBy):
 
 
 if __name__=='__main__':
-    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
+    parser = argparse.ArgumentParser(
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter,
             description = textwrap.dedent('''\
                     {codeName} : Returns information extracted from dicom within the directory
                     ====================
