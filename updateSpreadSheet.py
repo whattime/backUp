@@ -21,7 +21,7 @@ def main(study, database, target):
 
     try:
         if study:
-            updateSpreadSheet(sourceDf,target,'studyName')
+            updateSpreadSheet(sourceDf,target,'studyName')#why?
         else:
             updateSpreadSheet(sourceDf,target,'group')
     except:
@@ -30,7 +30,8 @@ def main(study, database, target):
     #styling
     styleUpdate(target)
     uid = pwd.getpwnam(getpass.getuser()).pw_uid
-    gid = grp.getgrnam("ccnc_mri").gr_gid
+    gid = grp.getgrnam('CCNC_MRI').gr_gid
+    gid = grp.getgrnam(getpass.getuser()).gr_gid
     os.chmod(target, 0o2775)
     os.chown(target, uid, gid)
     print 'finished'
@@ -88,26 +89,63 @@ def updateSpreadSheet(df,target,divideBy):
 
     writer = pd.ExcelWriter(target)
 
-    #group count
+    #group count    
     count={}
     for group,dataFrame in groupbyGroup:
-        #followUpT1count = len(dataFrame[dataFrame.T1Number >= 208][dataFrame.timeline!='baseline'])
-        followUpT1count = len([x for x in dataFrame[dataFrame.timeline!='baseline']['T1Number'] if type(x)==int and x >= 208])
-        followUpDTIcount  = len([x for x in dataFrame[dataFrame.timeline!='baseline']['DTINumber'] if type(x)==int and x >= 65])
-        followUpDKIcount  = len([x for x in dataFrame[dataFrame.timeline!='baseline']['DKINumber'] if type(x)==int and x >= 151])
-        followUpRESTcount  = len([x for x in dataFrame[dataFrame.timeline!='baseline']['RESTNumber'] if type(x)==int and x >= 4060])
+              
+        contain_T1Number = dataFrame[dataFrame.timeline=='baseline']['T1Number']
+        contain_DTINumber = dataFrame[dataFrame.timeline=='baseline']['DTINumber']
+        contain_DKINumber = dataFrame[dataFrame.timeline=='baseline']['DKINumber']
+        contain_RESTNumber = dataFrame[dataFrame.timeline=='baseline']['RESTNumber']
+        
+        contain_T1Number2 = dataFrame[dataFrame.timeline!='baseline']['T1Number']
+        contain_DTINumber2 = dataFrame[dataFrame.timeline!='baseline']['DTINumber']
+        contain_DKINumber2 = dataFrame[dataFrame.timeline!='baseline']['DKINumber']
+        contain_RESTNumber2 = dataFrame[dataFrame.timeline!='baseline']['RESTNumber']
 
-        baselineT1count = len([x for x in dataFrame[dataFrame.timeline=='baseline']['T1Number'] if type(x)==int and x >= 208])
-        baselineDTIcount  = len([x for x in dataFrame[dataFrame.timeline=='baseline']['DTINumber'] if type(x)==int and x >= 65])
-        baselineDKIcount  = len([x for x in dataFrame[dataFrame.timeline=='baseline']['DKINumber'] if type(x)==int and x >= 151])
-        baselineRESTcount  = len([x for x in dataFrame[dataFrame.timeline=='baseline']['RESTNumber'] if type(x)==int and x >= 4060])
+        baselineT1count = 0
+        baselineDTIcount = 0
+        baselineDKIcount = 0
+        baselineRESTcount = 0
+
+        for contain in contain_T1Number:    
+            if contain >= 208:
+                baselineT1count += 1
+        for contain in contain_DTINumber:    
+            if contain >= 65:
+                baselineDTIcount += 1
+        for contain in contain_DKINumber:    
+            if contain >= 151:
+                baselineDKIcount += 1
+        for contain in contain_RESTNumber:    
+            if contain >= 4060:
+                baselineRESTcount += 1   
+
+        followUpT1count = 0
+        followUpDTIcount = 0
+        followUpDKIcount = 0
+        followUpRESTcount = 0
+
+        for contain in contain_T1Number2:    
+            if contain >= 208:
+                followUpT1count += 1
+        for contain in contain_DTINumber2:    
+            if contain >= 65:
+                followUpDTIcount += 1
+        for contain in contain_DKINumber2:    
+            if contain >= 151:
+                followUpDKIcount += 1
+        for contain in contain_RESTNumber2:    
+            if contain >= 4060:
+                followUpRESTcount += 1
+
 
         count[group]=[baselineT1count, baselineDTIcount, baselineDKIcount, baselineRESTcount,
-                followUpT1count, followUpDTIcount, followUpDKIcount, followUpRESTcount]
+                      followUpT1count, followUpDTIcount, followUpDKIcount, followUpRESTcount]
 
     countDf = pd.DataFrame.from_dict(count,orient='index')
     countDf.columns = ['baseline T1','baseline DTI','baseline DKI','baseline REST',
-            'followUp T1','followUp DTI','followUp DKI','followUp REST']
+                       'followUp T1','followUp DTI','followUp DKI','followUp REST']
 
     countDf.to_excel(writer,'Count')
     df.sort('scanDate',ascending=False)[:20].to_excel(writer,'Recent')
