@@ -340,101 +340,79 @@ def server_connect(server, data_from):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-                                     description=textwrap.dedent('''\
-                                     {codeName} : Copy MRI data from external hard drive to system.
-                                                  It automatically adds logs to ccnc database.
-                                      ========================================
-                                      eg) {codeName} 
-                                     '''.format(codeName=os.path.basename(__file__))))
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description=textwrap.dedent('''\
+            {codeName} : Copy MRI data from external hard drive to system.
+                         It automatically adds logs to ccnc database.
+            ========================================
+            eg) {codeName}
+            '''.format(codeName=os.path.basename(__file__))))
 
-    # Help dictionary
-    HelpArguments = [
-        {   
-            'options': ['-i', '--inputDirs'],
-            'keywordArguments': {
-                                    'help': 'Location of data to back up. Eg) /Volumes/20160420/CHO_KANG_IK_12344321',
-                                    'nargs': '*',
-                                    'default': False
-                                }
-        },
-        {
-            'options': ['-hd', '--hddLocation'],
-            'keywordArguments': {
-                                    'help': 'Location of external drive that contains new data. Eg) /Volumes/160412',
-                                    'default': "/Users/bienseo/miniconda2/lib/python2.7/site-packages/backUp"
-                                } # directory: temporarily changed
-        },
-        {   
-            'options': ['-l', '--USBlogFile'],
-            'keywordArguments': {
-                                    'help': 'Location of excel file that contains back up log. Eg) /Volumes/160412/log.xlsx',
-                                    'default': False
-                                }
-        },
-        {
-            'options': ['-b', '--backupDir'],
-            'keywordArguments': {
-                                    'help': 'Location of data storage root. Default : "/Volumes/promise/CCNC_MRI_3T"',
-                                    'default': "/Users/bienseo/miniconda2/lib/python2.7/site-packages/backUp"
-                                }
-        },
-        {
-            'options': ['-d', '--database'],
-            'keywordArguments': {
-                                    'help': 'Location of database file. Default : "/Volumes/promise/CCNC_MRI_3T/database/database.xls"',
-                                    'default': "/Users/bienseo/miniconda2/lib/python2.7/site-packages/backUp/database/database.xls"
-                                } # directory: temporarily changed
-        },
-        {
-            'options': ['-s', '--spreadsheet'],
-            'keywordArguments': {
-                                    'help': 'Location of output excel file. Default : "/ccnc/MRIspreadsheet/MRI.xls"',
-                                    'default': "/Users/bienseo/miniconda2/lib/python2.7/site-packages/backUp/ccnc/MRIspreadsheet/Workbook1.xls"
-                                } # directory: temporarily changed
-        },
-        {
-            'options': ['-f', '--freesurfer'],
-            'keywordArguments': {
-                                    'help': 'Run freesurfer',
-                                    'action': 'store_true',
-                                    'default': False
-                                }
-        },
-        {
-            'options': ['-m', '--motion'],
-            'keywordArguments': {
-                                    'help': 'Run motion extraction',
-                                    'action': 'store_true',
-                                    'default': False
-                                }
-        },
-        {
-            'options': ['-x', '--executeCopy'],
-            'keywordArguments': {
-                                    'help': 'Execute copy and update database',
-                                    'action': 'store_true',
-                                    'default': False
-                                }
-        },
-        {
-            'options': ['-n', '--nasBackup'],
-            'keywordArguments': {
-                                    'help': 'Makes dual back up to NAS',
-                                    'action': 'store_true',
-                                    'default': False
-                                }
-        }
-    ]
+    parser.add_argument(
+        '-i', '--inputDirs',
+        help='Location of data to back up. Eg) /Volumes/20160420/CHO_KANG_IK_12344321',
+        nargs='*',
+        default=False,
+        )
 
-    for HelpArgument in HelpArguments:
-            options = HelpArgument['options']
-            keywordArguments = HelpArgument['keywordArguments']
-            parser.add_argument(*options, **keywordArguments)
-      
+    parser.add_argument(
+        '-hd', '--hddLocation',
+        help='Location of external drive that contains new data. Eg) /Volumes/160412',
+        default='/Volumes/160412',
+        )
+
+    parser.add_argument(
+        '-l', '--USBlogFile',
+        help='Location of excel file that contains back up log. Eg) /Volumes/160412/log.xlsx',
+        default=False,
+        )
+
+    parser.add_argument(
+        '-b', '--backupDir',
+        help='Location of data storage root. Default : "/Volumes/promise/CCNC_MRI_3T"',
+        default="/Volumes/promise/nas_BackUp/CCNC_MRI_3T",
+        )
+    parser.add_argument(
+        '-d', '--database',
+        help='Location of database file. Default : "/Volumes/promise/CCNC_MRI_3T/database/database.xls"',
+        default="/Volumes/promise/CCNC_MRI_3T/database/database.xls",
+        )
+    parser.add_argument(
+        '-s', '--spreadsheet',
+        help='Location of output excel file. Default : "/ccnc/MRIspreadsheet/MRI.xls"',
+        default="/ccnc/MRIspreadsheet/MRI.xls",
+        )
+
+    parser.add_argument(
+        '-f', '--freesurfer',
+        help='Run freesurfer',
+        action='store_true',
+        default=False,
+        )
+
+    parser.add_argument(
+        '-m', '--motion',
+        help='Run motion extraction',
+        action='store_true',
+        default=False,
+        )
+
+    parser.add_argument(
+        '-x', '--executeCopy',
+        help='Execute copy and update database',
+        action='store_true',
+        default=False,
+        )
+
+    parser.add_argument(
+        '-n', '--nasBackup',
+        help='Makes dual back up to NAS',
+        action='store_true',
+        default=False,
+        )
     args = parser.parse_args()
 
     backUp(args.inputDirs, args.hddLocation, args.USBlogFile, args.backupDir,
-           args.database, args.spreadsheet, args.freesurfer, args.motion,
-           args.executeCopy, args.nasBackup)
-
+            args.database, args.spreadsheet, args.freesurfer, args.motion,
+            args.executeCopy, args.nasBackup)
