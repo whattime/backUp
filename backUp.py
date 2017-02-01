@@ -7,14 +7,14 @@ from datetime import date
 import sys
 import os
 import shutil
-from progressbar import AnimatedMarker,ProgressBar,Percentage,Bar
+from progressbar import AnimatedMarker, ProgressBar, Percentage, Bar
 import argparse
 import textwrap
 import pandas as pd
 import updateSpreadSheet
-import motion_extraction
-import freesurfer
-import freesurfer_summary
+import motionExtraction
+import easyFreesurfer
+import freesurferSummary
 import subject as subj
 
 
@@ -24,8 +24,10 @@ from paramiko import SSHClient
 from scp import SCPClient
 
 
+def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo,
+           DataBaseAddress, spreadsheet,
+           freesurfer, motion, copyExecute, nasBackup):
 
-def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo, DataBaseAddress, spreadsheet, freesurferOn, motionOn, copyExecuteOn, nasBackupOn):
     # External HDD log
     if USBlogFile:
         logFileInUSB = USBlogFile
@@ -34,11 +36,11 @@ def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo, DataBaseAddress, spreads
     else:
         logFileInUSB = os.path.join(backUpFrom,"log.xlsx")
 
-    logDf = copiedDirectoryCheck(backUpFrom,logFileInUSB)
-    newDirectoryList,logDf = newDirectoryGrep(inputDirs, backUpFrom,logDf)
+    logDf = copiedDirectoryCheck(backUpFrom, logFileInUSB)
+    newDirectoryList,logDf = newDirectoryGrep(inputDirs, backUpFrom, logDf)
     logDf.to_excel(logFileInUSB,'Sheet1')
 
-    if newDirectoryList==[]:
+    if newDirectoryList == []:
         sys.exit('Everything have been backed up !')
 
     subjectClassList = []
@@ -47,7 +49,7 @@ def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo, DataBaseAddress, spreads
         checkFileNumbers(subjClass)
         subjectClassList.append(subjClass)
 
-        if copyExecuteOn:
+        if copyExecute:
             executeCopy(subjClass)
 
             subjDf = saveLog(subjClass)
@@ -55,58 +57,62 @@ def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo, DataBaseAddress, spreads
             dbDf = processDB(DataBaseAddress)
 
             newDf = pd.concat([dbDf, subjDf]).reset_index()
-            newDf = newDf[[ u'koreanName',    u'subjectName', u'subjectInitial',
-                            u'group',            u'sex',            u'age',
-                            u'DOB',       u'scanDate',       u'timeline',
-                            u'studyname',  u'patientNumber',       u'T1Number',
-                            u'DTINumber',      u'DKINumber',     u'RESTNumber',
-                            u'REST2Number',     u'folderName',       u'backUpBy',
+            newDf = newDf[[ u'koreanName',  u'subjectName',   u'subjectInitial',
+                            u'group',       u'sex',           u'age',
+                            u'DOB',         u'scanDate',      u'timeline',
+                            u'studyname',   u'patientNumber', u'T1Number',
+                            u'DTINumber',   u'DKINumber',     u'RESTNumber',
+                            u'REST2Number', u'folderName',    u'backUpBy',
                             u'note']]
 
             newDf['koreanName'] = newDf['koreanName'].str.decode('utf-8')
             newDf['note'] = newDf['note'].str.decode('utf-8')
             newDf.to_excel(DataBaseAddress, 'Sheet1')
-            #os.chmod(DataBaseAddress, 0o2770)
+            # os.chmod(DataBaseAddress, 0o2770)
 
-            updateSpreadSheet.main(False, DataBaseAddress, spreadsheet)
+            updateSpreadSheet.main(False, DataBaseAddress, spreadsheet)#False
 
-
-    if motionOn:
+    if motion:
         print 'Now, running motion_extraction'
         for subjectClass in subjectClassList:
-            motion_extraction.main(subjectClass.targetDir, True, True, False)
+            motionExtraction.main(subjectClass.targetDir, True, True, False)
 
-    if nasBackupOn:
+    if nasBackup:
         server = '147.47.228.192'
         for subjectClass in subjectClassList:
-            copiedDir=os.path.dirname(subjectClass.targetDir)
+            copiedDir = os.path.dirname(subjectClass.targetDir)
             server_connect(server, copiedDir)
 
-    if freesurferOn:
+    if freesurfer:
         for subjectClass in subjectClassList:
             freesurfer.main(subjectClass.targetDir, 
-                            os.path.join(subjectClass.targetDir, 'FREESURFER'))
-            freesurfer_summary.main(copiedDir, None, "ctx_lh_G_cuneus", True, True, True, True)
-
+                            os.path.join(subjectClass.targetDir,'FREESURFER'))
+            freesurfer_summary.main(copiedDir, None,
+                                    "ctx_lh_G_cuneus", True, True, True, True)
     print 'Completed\n'
-    
+ 
 
-def noCall(logDf,backUpFrom,folderName):
-    logDf = pd.concat([logDf,pd.DataFrame.from_dict({'directoryName':folderName,'backedUpBy':getpass.getuser(),'backedUpAt':time.ctime()},orient='index').T])
+def noCall(logDf, backUpFrom, folderName):
+    logDf = pd.concat([logDf,pd.DataFrame.from_dict({'directoryName': folderName,
+                                                     'backedUpBy': getpass.getuser(),
+                                                     'backedUpAt': time.ctime()},orient='index').T])
     return logDf
 
 
-def copiedDirectoryCheck(backUpFrom,logFileInUSB):
+def copiedDirectoryCheck(backUpFrom, logFileInUSB):
     if os.path.isfile(logFileInUSB):
         df = pd.read_excel(logFileInUSB,'Sheet1')
         print 'Log loaded successfully'
     else:
-        df = pd.DataFrame.from_dict({'directoryName':None,'backedUpBy':None,'backedUpAt':None},orient='index').T
-
+        df = pd.DataFrame.from_dict({
+                                     'directoryName': None,
+                                     'backedUpBy': None,
+                                     'backedUpAt': None
+                                    },orient='index').T
     return df
 
 
-def newDirectoryGrep(inputDirs, backUpFrom,logDf):
+def newDirectoryGrep(inputDirs, backUpFrom, logDf):
     '''
     show the list of folders under the backUpFrom
     if it is confirmed by the user
@@ -117,43 +123,43 @@ def newDirectoryGrep(inputDirs, backUpFrom,logDf):
     if inputDirs:
         for subjFolder in inputDirs:
             toBackUp.append(subjFolder)
-
     else:
-
-        #grebbing directories in the target
+        # grebbing directories in the target
         allFiles = os.listdir(backUpFrom)
-        directories = [item for item in allFiles if os.path.isdir(os.path.join(backUpFrom,item))
+        directories = [item for item in allFiles if os.path.isdir(os.path.join(backUpFrom, item))
                        and not item.startswith('$')
                        and not item.startswith('.')]
 
         newDirectories = [item for item in directories if not item in [str(x).encode("ascii") for x in logDf.directoryName]]
 
-
         for folderName in newDirectories:
-            subjFolder = os.path.join(backUpFrom,folderName)
+            subjFolder = os.path.join(backUpFrom, folderName)
             stat = os.stat(subjFolder)
             created = os.stat(subjFolder).st_ctime
-            asciiTime = time.asctime( time.gmtime( created ) )
+            asciiTime = time.asctime(time.gmtime(created))
             print '''
             ------------------------------------
             ------{0}
             created on ( {1} )
             ------------------------------------
             '''.format(folderName,asciiTime)
-            response = raw_input('\nIs this the name of the subject you want to back up? [Yes/No/Quit/noCall] :')
+            response = raw_input('\nIs this the name of the subject you want to back up?'
+                                 '[Yes/No/Quit/noCall] : ')
+
             if re.search('[yY]|[yY][Ee][Ss]',response):
                 toBackUp.append(subjFolder)
             elif re.search('[Dd][Oo][Nn][Ee]|stop|[Qq][Uu][Ii][Tt]|exit',response):
                 break
             elif re.search('[Nn][Oo][Cc][Aa][Ll][Ll]',response):
-                logDf = noCall(logDf,backUpFrom,folderName)
+                logDf = noCall(logDf, backUpFrom, folderName)
             else:
                 continue
 
     print toBackUp
-    return toBackUp,logDf
+    return toBackUp, logDf
 
-def calculate_age(born,today):
+
+def calculate_age(born, today):
     try:
         birthday = born.replace(year=today.year)
     except ValueError: # raised when birth date is February 29 and the current year is not a leap year
@@ -163,27 +169,30 @@ def calculate_age(born,today):
     else:
         return today.year - born.year
 
-def checkFileNumbers(subjClass):
-    #Make a checking list
-    checkList={'T1':208,
-            'DTI':65,
-            'DKI':151,
-            'REST':4060,
-            'REST2':152,
-            'REST2Baduk':3132,
-            'T2TSE':25,
-            'T2FLAIR':25,
-            'DTI_EXP':40,
-            'DTI_FA':40,
-            'DTI_COLFA':40,
-            'DKI_EXP':200,
-            'DKI_FA':40,
-            'DKI_COLFA':40,
-            'SCOUT':9}
 
-    #Check whether they have right numbers
+def checkFileNumbers(subjClass):
+    # Make a checking list
+    checkList = {
+                 'T1': 208,
+                 'DTI': 65,
+                 'DKI': 151,
+                 'REST': 4060,
+                 'REST2': 152,
+                 'REST2Baduk': 3132,
+                 'T2TSE': 25,
+                 'T2FLAIR': 25,
+                 'DTI_EXP': 40,
+                 'DTI_FA': 40,
+                 'DTI_COLFA': 40,
+                 'DKI_EXP': 200,
+                 'DKI_FA': 40,
+                 'DKI_COLFA': 40,
+                 'SCOUT': 9
+                }
+
+    # Check whether they have right numbers
     for modality, (modalityLocation, fileCount) in zip(subjClass.modalityMapping, subjClass.dirDicomNum):
-        if checkList[modality]!=fileCount:
+        if checkList[modality] != fileCount:
             print '{modality} numbers does not seem right !  : {fileCount}'.format(
                     modality=modality,
                     fileCount=fileCount)
@@ -194,9 +203,8 @@ def checkFileNumbers(subjClass):
                 sys.exit(0)
         else:
             print 'Correct dicom number - \t {modality} : {fileCount}'.format(
-                    modality=modality,
-                    fileCount=fileCount)
-
+                   modality=modality,
+                   fileCount=fileCount)
 
 
 def executeCopy(subjClass):
@@ -206,7 +214,7 @@ def executeCopy(subjClass):
 
     totalNum = subjClass.allDicomNum
     accNum = 0
-    pbar=ProgressBar().start()
+    pbar = ProgressBar().start()
     for source, modality, num in zip(subjClass.dirs, 
                                      subjClass.modalityMapping, 
                                      subjClass.modalityDicomNum.values()):
@@ -231,25 +239,26 @@ def processDB(DataBaseAddress):
         print df
 
     else:
-        df = pd.DataFrame.from_dict({None:{'subjectName':None,
-                                           'subjectInitial':None,
-                                           'group':None,
-                                           'sex':None,
-                                           'DOB':None,
-                                           'scanDate':None,
-                                           'age':None,
-                                           'timeline':None,
-                                           'studyname':None,
-                                           'folderName':None,
-                                           'T1Number':None,
-                                           'DTINumber':None,
-                                           'DKINumber':None,
-                                           'RESTNumber':None,
-                                           'note':None,
-                                           'patientNumber':None,
-                                           'folderName':None,
-                                           'backUpBy':None
-                                           }
+        df = pd.DataFrame.from_dict({ None: {
+                                               'subjectName': None,
+                                               'subjectInitial': None,
+                                               'group': None,
+                                               'sex': None,
+                                               'DOB': None,
+                                               'scanDate': None,
+                                               'age': None,
+                                               'timeline': None,
+                                               'studyname': None,
+                                               'folderName': None,
+                                               'T1Number': None,
+                                               'DTINumber': None,
+                                               'DKINumber': None,
+                                               'RESTNumber': None,
+                                               'note': None,
+                                               'patientNumber': None,
+                                               'folderName': None,
+                                               'backUpBy': None
+                                            }
                                      },orient='index'
                                     )
     return df
@@ -261,61 +270,66 @@ def saveLog(sub):
     df.to_csv(os.path.join(sub.targetDir, 'log.txt'))
     return df
 
-def makeLog(koreanName,group,timeline,dob,note,subjInitial,fullname,sex,subjNum,studyname,scanDate, folderName, modalityCount, user):
-    dateOfBirth=date(int(dob[:4]),int(dob[4:6]), int(dob[6:]))
-    formalSourceDate=date(int(scanDate[:4]),int(scanDate[4:6]), int(scanDate[6:]))
+def makeLog(koreanName, group, timeline, dob, note,
+            subjInitial, fullname, sex, subjNum, studyname,
+            scanDate, folderName, modalityCount, user):
+
+    dateOfBirth = date(int(dob[:4]), int(dob[4:6]), int(dob[6:]))
+    formalSourceDate = date(int(scanDate[:4]),int(scanDate[4:6]), int(scanDate[6:]))
     age = calculate_age(dateOfBirth,formalSourceDate)
 
-    #Image numbers
-    imageNumbers={}
-    for image in 'T1','DTI','DKI','REST','T2FLAIR','T2TSE','REST2':
+    # Image numbers
+    images = ['T1','DTI','DKI','REST','T2FLAIR','T2TSE','REST2']
+    imageNumbers = {}
+    for image in images:
         try:
-            imageNumbers[image]=modalityCount[image]
+            imageNumbers[image] = modalityCount[image]
         except:
-            imageNumbers[image]=''
+            imageNumbers[image] = ''
 
-    #new dictionary
+    # New dictionary  
     allInfoRearranged = {}
+    allInfoRearranged = {
+                            'koreanName': koreanName,
+                            'subjectName': fullname,
+                            'subjectInitial': subjInitial,
+                            'group': group,
+                            'sex': sex,
+                            'timeline': timeline,
+                            'studyname': studyname,
+                            'DOB': dateOfBirth.isoformat(),
+                            'scanDate': formalSourceDate.isoformat(),
+                            'age': age,
 
-    allInfoRearranged['koreanName']=koreanName
-    allInfoRearranged['subjectName']=fullname
-    allInfoRearranged['subjectInitial']=subjInitial
-    allInfoRearranged['group']=group
-    allInfoRearranged['sex']=sex
-    allInfoRearranged['timeline']=timeline
-    allInfoRearranged['studyname']=studyname
-    allInfoRearranged['DOB']=dateOfBirth.isoformat()
-    allInfoRearranged['scanDate']=formalSourceDate.isoformat()
-    allInfoRearranged['age']=age
-
-    allInfoRearranged['T1Number']= imageNumbers['T1']
-    allInfoRearranged['DTINumber']=imageNumbers['DTI']
-    allInfoRearranged['DKINumber']=imageNumbers['DKI']
-    allInfoRearranged['RESTNumber']=imageNumbers['REST']
-    allInfoRearranged['REST2Number']=imageNumbers['REST2']
-
-    allInfoRearranged['note']=note
-    allInfoRearranged['patientNumber']=subjNum
-    allInfoRearranged['folderName']=folderName
-    allInfoRearranged['backUpBy']=user
-
+                            'note': note,
+                            'patientNumber': subjNum,
+                            'folderName': folderName,
+                            'backUpBy': user,
+                            
+                            'T1Number': imageNumbers['T1'],
+                            'DTINumber': imageNumbers['DTI'],
+                            'DKINumber': imageNumbers['DKI'],
+                            'RESTNumber': imageNumbers['REST'],
+                            'REST2Number': imageNumbers['REST2'] 
+                        }
     allInfoDf = pd.DataFrame.from_dict(allInfoRearranged,orient='index').T
-    allInfoDf = allInfoDf[[ u'koreanName',    u'subjectName', u'subjectInitial',
-                            u'group',            u'sex',            u'age',
-                            u'DOB',       u'scanDate',       u'timeline',
-                            u'studyname',  u'patientNumber',       u'T1Number',
-                            u'DTINumber',      u'DKINumber',     u'RESTNumber',
-                            u'REST2Number',     u'folderName',       u'backUpBy',
-                            u'note']]
-
+    allInfoDf = allInfoDf[[ 
+                            u'koreanName',  u'subjectName',   u'subjectInitial',
+                            u'group',       u'sex',           u'age',
+                            u'DOB',         u'scanDate',      u'timeline',
+                            u'studyname',   u'patientNumber', u'T1Number',
+                            u'DTINumber',   u'DKINumber',     u'RESTNumber',
+                            u'REST2Number', u'folderName',    u'backUpBy',
+                            u'note'
+                         ]]
     return allInfoDf
 
 
 def server_connect(server, data_from):
     ssh = SSHClient()
     ssh.load_system_host_keys()
-    username='admin'
-    data_to='/volume1/dual_back_up'
+    username = 'admin'
+    data_to = '/volume1/dual_back_up'
     password = getpass.getpass('Password admin@nas : ')
     ssh.connect(server, username=username, password=password)
 
@@ -326,79 +340,101 @@ def server_connect(server, data_from):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description=textwrap.dedent('''\
-            {codeName} : Copy MRI data from external hard drive to system.
-                         It automatically adds logs to ccnc database.
-            ========================================
-            eg) {codeName}
-            '''.format(codeName=os.path.basename(__file__))))
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+                                     description=textwrap.dedent('''\
+                                     {codeName} : Copy MRI data from external hard drive to system.
+                                                  It automatically adds logs to ccnc database.
+                                      ========================================
+                                      eg) {codeName} 
+                                     '''.format(codeName=os.path.basename(__file__))))
 
-    parser.add_argument(
-        '-i', '--inputDirs',
-        help='Location of data to back up. Eg) /Volumes/20160420/CHO_KANG_IK_12344321',
-        nargs='*',
-        default=False,
-        )
+    # Help dictionary
+    HelpArguments = [
+        {   
+            'options': ['-i', '--inputDirs'],
+            'keywordArguments': {
+                                    'help': 'Location of data to back up. Eg) /Volumes/20160420/CHO_KANG_IK_12344321',
+                                    'nargs': '*',
+                                    'default': False
+                                }
+        },
+        {
+            'options': ['-hd', '--hddLocation'],
+            'keywordArguments': {
+                                    'help': 'Location of external drive that contains new data. Eg) /Volumes/160412',
+                                    'default': "/Users/bienseo/miniconda2/lib/python2.7/site-packages/backUp"
+                                } # directory: temporarily changed
+        },
+        {   
+            'options': ['-l', '--USBlogFile'],
+            'keywordArguments': {
+                                    'help': 'Location of excel file that contains back up log. Eg) /Volumes/160412/log.xlsx',
+                                    'default': False
+                                }
+        },
+        {
+            'options': ['-b', '--backupDir'],
+            'keywordArguments': {
+                                    'help': 'Location of data storage root. Default : "/Volumes/promise/CCNC_MRI_3T"',
+                                    'default': "/Users/bienseo/miniconda2/lib/python2.7/site-packages/backUp"
+                                }
+        },
+        {
+            'options': ['-d', '--database'],
+            'keywordArguments': {
+                                    'help': 'Location of database file. Default : "/Volumes/promise/CCNC_MRI_3T/database/database.xls"',
+                                    'default': "/Users/bienseo/miniconda2/lib/python2.7/site-packages/backUp/database/database.xls"
+                                } # directory: temporarily changed
+        },
+        {
+            'options': ['-s', '--spreadsheet'],
+            'keywordArguments': {
+                                    'help': 'Location of output excel file. Default : "/ccnc/MRIspreadsheet/MRI.xls"',
+                                    'default': "/Users/bienseo/miniconda2/lib/python2.7/site-packages/backUp/ccnc/MRIspreadsheet/Workbook1.xls"
+                                } # directory: temporarily changed
+        },
+        {
+            'options': ['-f', '--freesurfer'],
+            'keywordArguments': {
+                                    'help': 'Run freesurfer',
+                                    'action': 'store_true',
+                                    'default': False
+                                }
+        },
+        {
+            'options': ['-m', '--motion'],
+            'keywordArguments': {
+                                    'help': 'Run motion extraction',
+                                    'action': 'store_true',
+                                    'default': False
+                                }
+        },
+        {
+            'options': ['-x', '--executeCopy'],
+            'keywordArguments': {
+                                    'help': 'Execute copy and update database',
+                                    'action': 'store_true',
+                                    'default': False
+                                }
+        },
+        {
+            'options': ['-n', '--nasBackup'],
+            'keywordArguments': {
+                                    'help': 'Makes dual back up to NAS',
+                                    'action': 'store_true',
+                                    'default': False
+                                }
+        }
+    ]
 
-    parser.add_argument(
-        '-hd', '--hddLocation',
-        help='Location of external drive that contains new data. Eg) /Volumes/160412',
-        default='/Volumes/160412',
-        )
-
-    parser.add_argument(
-        '-l', '--USBlogFile',
-        help='Location of excel file that contains back up log. Eg) /Volumes/160412/log.xlsx',
-        default=False,
-        )
-
-    parser.add_argument(
-        '-b', '--backupDir',
-        help='Location of data storage root. Default : "/Volumes/promise/CCNC_MRI_3T"',
-        default="/Volumes/promise/nas_BackUp/CCNC_MRI_3T",
-        )
-    parser.add_argument(
-        '-d', '--database',
-        help='Location of database file. Default : "/Volumes/promise/CCNC_MRI_3T/database/database.xls"',
-        default="/Volumes/promise/CCNC_MRI_3T/database/database.xls",
-        )
-    parser.add_argument(
-        '-s', '--spreadsheet',
-        help='Location of output excel file. Default : "/ccnc/MRIspreadsheet/MRI.xls"',
-        default="/ccnc/MRIspreadsheet/MRI.xls",
-        )
-
-    parser.add_argument(
-        '-f', '--freesurfer',
-        help='Run freesurfer',
-        action='store_true',
-        default=False,
-        )
-
-    parser.add_argument(
-        '-m', '--motion',
-        help='Run motion extraction',
-        action='store_true',
-        default=False,
-        )
-
-    parser.add_argument(
-        '-x', '--executeCopy',
-        help='Execute copy and update database',
-        action='store_true',
-        default=False,
-        )
-
-    parser.add_argument(
-        '-n', '--nasBackup',
-        help='Makes dual back up to NAS',
-        action='store_true',
-        default=False,
-        )
+    for HelpArgument in HelpArguments:
+            options = HelpArgument['options']
+            keywordArguments = HelpArgument['keywordArguments']
+            parser.add_argument(*options, **keywordArguments)
+      
     args = parser.parse_args()
 
     backUp(args.inputDirs, args.hddLocation, args.USBlogFile, args.backupDir,
-            args.database, args.spreadsheet, args.freesurfer, args.motion,
-            args.executeCopy, args.nasBackup)
+           args.database, args.spreadsheet, args.freesurfer, args.motion,
+           args.executeCopy, args.nasBackup)
+
