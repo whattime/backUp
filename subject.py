@@ -61,7 +61,7 @@ class subject(object):
         self.numberForGroup = maxGroupNum(os.path.join(dbLoc, self.group))
         self.study = raw_input('Study name ? : ')
 
-        self.timeline = raw_input('baseline or follow up ? eg) baseline or followup : ')#unicodeDecodeError.2yfu
+        self.timeline = raw_input('baseline or follow up ? eg) baseline or 2yfu : ')#unicodeDecodeError.2yfu
         if self.timeline != 'baseline':
             df = pd.ExcelFile(os.path.join(dbLoc,'database','database.xls')).parse(0)
             self.folderName = df.ix[(df.timeline=='baseline') & (df.patientNumber == int(self.id)), 
