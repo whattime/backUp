@@ -67,6 +67,7 @@ class subject(object):
         self.timeline = raw_input('baseline or follow up ? eg) baseline, 6mon, 1yfu, 2yfu : ') #bienseo: Solve unicode-error problems
         
         #bienseo: Classify timeline(baseline or follow up)
+
         if self.timeline != 'baseline':
             df = pd.ExcelFile(os.path.join(dbLoc,'database','database.xls')).parse(0)
            
