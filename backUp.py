@@ -364,7 +364,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '-hd', '--hddLocation',
         help='Location of external drive that contains new data. Eg) /Volumes/160412',
-        default='/Volumes/160412',
+        default='/Volumes/160412', #bienseo: directory changed in D1
         )
 
     parser.add_argument(
@@ -376,17 +376,17 @@ if __name__ == '__main__':
     parser.add_argument(
         '-b', '--backupDir',
         help='Location of data storage root. Default : "/Volumes/promise/CCNC_MRI_3T"',
-        default="/Volumes/promise/nas_BackUp/CCNC_MRI_3T",
+        default="/Volumes/promise/nas_BackUp/CCNC_MRI_3T", #bienseo: directory changed in D1
         )
     parser.add_argument(
         '-d', '--database',
         help='Location of database file. Default : "/Volumes/promise/CCNC_MRI_3T/database/database.xls"',
-        default="/Volumes/promise/CCNC_MRI_3T/database/database.xls",
+        default="/Volumes/promise/CCNC_MRI_3T/database/database.xls", #bienseo: directory changed in D1
         )
     parser.add_argument(
         '-s', '--spreadsheet',
         help='Location of output excel file. Default : "/ccnc/MRIspreadsheet/MRI.xls"',
-        default="/ccnc/MRIspreadsheet/MRI.xls",
+        default="/ccnc/MRIspreadsheet/MRI.xls", #bienseo: directory changed in D1
         )
 
     parser.add_argument(
