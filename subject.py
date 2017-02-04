@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+'''
+# Back up data and forms a database from the MRI data
+# Created by Kang Ik Kevin Cho
+# Contributors: Dahye Stella Bae, Eunseo Cho
+'''
 from __future__ import division
 import os
 import dicom
@@ -10,7 +15,6 @@ from progressbar import AnimatedMarker,ProgressBar,Percentage,Bar
 class subject(object):
     def __init__(self, subjectDir, dbLoc):
         self.location = subjectDir
-
 
         dicomDirDict = {}
 
@@ -60,22 +64,28 @@ class subject(object):
         self.group = raw_input('Group ? : ')
         self.numberForGroup = maxGroupNum(os.path.join(dbLoc, self.group))
         self.study = raw_input('Study name ? : ')
+        self.timeline = raw_input('baseline or follow up ? eg) baseline, 6mon, 1yfu, 2yfu : ') #bienseo: Solve unicode-error problems
+        
+        #bienseo: Classify timeline(baseline or follow up)
 
-        self.timeline = raw_input('baseline or follow up ? eg) baseline or 2yfu : ')#unicodeDecodeError.2yfu
         if self.timeline != 'baseline':
             df = pd.ExcelFile(os.path.join(dbLoc,'database','database.xls')).parse(0)
-            self.folderName = df.ix[(df.timeline=='baseline') & (df.patientNumber == int(self.id)), 
-                                     'folderName'].get_values().tostring()
-
-            if self.folderName == '':
-                self.folderName = self.group + self.numberForGroup + '_' + self.initial
+           
+            self.folderName = df.ix[(df.timeline=='baseline') & (df.patientNumber == int(self.id)), 'folderName'].values.tolist()[0]
+            #bienseo: Show back up folder name
+            print '\n\n       Now Back up to       ' + self.folderName + '\n\n'
+            self.targetDir = os.path.join(dbLoc,
+                                          self.group,
+                                          self.folderName,
+                                          'followUp',
+                                          self.timeline)
         else:
             self.folderName = self.group + self.numberForGroup + '_' + self.initial
+            self.targetDir = os.path.join(dbLoc,
+                                          self.group,
+                                          self.folderName,
+                                          self.timeline)    
 
-        self.targetDir = os.path.join(dbLoc,
-                self.group,
-                self.group + self.numberForGroup + '_' + self.initial,
-                self.timeline)
 
 def modalityMapping(directory):
     t1 = re.compile(r'tfl|[^s]t1',re.IGNORECASE)

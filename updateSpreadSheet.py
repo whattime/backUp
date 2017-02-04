@@ -1,5 +1,9 @@
 #!/usr/bin/python
-
+'''
+# Update Spreadsheet(database.xls, MRI.xls)
+# Created by Kang Ik Kevin Cho
+# Contributors: Dahye Stella Bae, Eunseo Cho
+'''
 import pandas as pd
 import os
 import re
@@ -27,13 +31,14 @@ def main(study, database, target):
     except:
         updateSpreadSheet(sourceDf,target,'group')
 
-    #styling
-    styleUpdate(target)
-    uid = pwd.getpwnam(getpass.getuser()).pw_uid
-    gid = grp.getgrnam("ccnc_mri").gr_gid
-    os.chmod(target, 0o2775)
-    os.chown(target, uid, gid)
-    print 'finished'
+    #styling #bienseo
+ #   styleUpdate(target)
+ #   uid = pwd.getpwnam(getpass.getuser()).pw_uid
+ #   gid = grp.getgrnam('ccnc_mri').gr_gid
+ #   gid = grp.getgrnam(getpass.getuser()).gr_gid
+ #   os.chmod(target, 0o2775)
+ #   os.chown(target, uid, gid)
+ #   print 'finished'
 
 def styleUpdate(target):
     print target
@@ -89,25 +94,78 @@ def updateSpreadSheet(df,target,divideBy):
     writer = pd.ExcelWriter(target)
 
     #group count
+    #bienseo: Write in MRI.xls, using dictionary type data
     count={}
     for group,dataFrame in groupbyGroup:
-        #followUpT1count = len(dataFrame[dataFrame.T1Number >= 208][dataFrame.timeline!='baseline'])
-        followUpT1count = len([x for x in dataFrame[dataFrame.timeline!='baseline']['T1Number'] if type(x)==int and x >= 208])
-        followUpDTIcount  = len([x for x in dataFrame[dataFrame.timeline!='baseline']['DTINumber'] if type(x)==int and x >= 65])
-        followUpDKIcount  = len([x for x in dataFrame[dataFrame.timeline!='baseline']['DKINumber'] if type(x)==int and x >= 151])
-        followUpRESTcount  = len([x for x in dataFrame[dataFrame.timeline!='baseline']['RESTNumber'] if type(x)==int and x >= 4060])
+      
+        count_baseline = {
+                           'bslDf': dataFrame[dataFrame.timeline=='baseline'],
+                           'cnt_dicomNum': {
+                                             'T1': 208,
+                                             'DTI': 65,
+                                             'DKI': 151,
+                                             'REST': 4060
+                                           },
+                           'bslCnt': {
+                                       'T1count': 0,
+                                       'DTIcount': 0,
+                                       'DKIcount': 0,
+                                       'RESTcount': 0
+                                     }
+                          }
 
-        baselineT1count = len([x for x in dataFrame[dataFrame.timeline=='baseline']['T1Number'] if type(x)==int and x >= 208])
-        baselineDTIcount  = len([x for x in dataFrame[dataFrame.timeline=='baseline']['DTINumber'] if type(x)==int and x >= 65])
-        baselineDKIcount  = len([x for x in dataFrame[dataFrame.timeline=='baseline']['DKINumber'] if type(x)==int and x >= 151])
-        baselineRESTcount  = len([x for x in dataFrame[dataFrame.timeline=='baseline']['RESTNumber'] if type(x)==int and x >= 4060])
+        for contain in count_baseline['bslDf']['T1Number']:    
+            if contain >= count_baseline['cnt_dicomNum']['T1']:
+                count_baseline['bslCnt']['T1count'] += 1
+        for contain in count_baseline['bslDf']['DTINumber']:    
+            if contain >= count_baseline['cnt_dicomNum']['DTI']:
+                count_baseline['bslCnt']['DTIcount'] += 1
+        for contain in count_baseline['bslDf']['DKINumber']:    
+            if contain >= count_baseline['cnt_dicomNum']['DKI']:
+                count_baseline['bslCnt']['DKIcount'] += 1
+        for contain in count_baseline['bslDf']['RESTNumber']:    
+            if contain >= count_baseline['cnt_dicomNum']['REST']:
+                count_baseline['bslCnt']['RESTcount'] += 1                  
 
-        count[group]=[baselineT1count, baselineDTIcount, baselineDKIcount, baselineRESTcount,
-                followUpT1count, followUpDTIcount, followUpDKIcount, followUpRESTcount]
 
+        count_followUp = {
+                           'fluDf': dataFrame[dataFrame.timeline!='baseline'],
+                           'cnt_dicomNum': {
+                                             'T1': 208,
+                                             'DTI': 65,
+                                             'DKI': 151,
+                                             'REST': 4060
+                                           },
+                           'fluCnt': {
+                                       'T1count': 0,
+                                       'DTIcount': 0,
+                                       'DKIcount': 0,
+                                       'RESTcount': 0
+                                     }
+                          }                  
+
+        for contain in count_followUp['fluDf']['T1Number']:    
+            if contain >= count_followUp['cnt_dicomNum']['T1']:
+                count_followUp['fluCnt']['T1count'] += 1
+        for contain in count_followUp['fluDf']['DTINumber']:    
+            if contain >= count_followUp['cnt_dicomNum']['DTI']:
+                count_followUp['fluCnt']['DTIcount'] += 1
+        for contain in count_followUp['fluDf']['DKINumber']:    
+            if contain >= count_followUp['cnt_dicomNum']['DKI']:
+                count_followUp['fluCnt']['DKIcount'] += 1
+        for contain in count_followUp['fluDf']['RESTNumber']:    
+            if contain >= count_followUp['cnt_dicomNum']['REST']:
+                count_followUp['fluCnt']['RESTcount'] += 1
+      
+        
+        count[group]=[count_baseline['bslCnt']['T1count'], count_baseline['bslCnt']['DTIcount'],
+                      count_baseline['bslCnt']['DKIcount'], count_baseline['bslCnt']['RESTcount'],
+                      count_followUp['fluCnt']['T1count'], count_followUp['fluCnt']['DTIcount'],
+                      count_followUp['fluCnt']['DKIcount'], count_followUp['fluCnt']['RESTcount']]
+                            
     countDf = pd.DataFrame.from_dict(count,orient='index')
     countDf.columns = ['baseline T1','baseline DTI','baseline DKI','baseline REST',
-            'followUp T1','followUp DTI','followUp DKI','followUp REST']
+                       'followUp T1','followUp DTI','followUp DKI','followUp REST']
 
     countDf.to_excel(writer,'Count')
     df.sort('scanDate',ascending=False)[:20].to_excel(writer,'Recent')
@@ -135,11 +193,10 @@ if __name__=='__main__':
             #epilog="By Kevin, 26th May 2014")
     parser.add_argument('-s','--study',action='store_true',help='Divide the database by studies')
     parser.add_argument('-d','--database', help='Database location', 
-            default = '/Volumes/promise/nas_BackUp/CCNC_MRI_3T/database/database.xls')
-    parser.add_argument('-o','--outExcel', help='Excel spreadsheet output location',
-            default = '/ccnc/MRIspreadsheet/MRI.xls')
+            default = '/Volumes/promise/nas_BackUp/CCNC_MRI_3T/database/database.xls') #bienseo?: location changed? 
+    parser.add_argument('-o','--outExcel', help='Excel spreadsheet output location',  
+            default = '/ccnc/MRIspreadsheet/MRI.xls') #bienseo?: location changed?
 
     args = parser.parse_args()
     print args.study
     main(args.study, args.database, args.outExcel)
-
