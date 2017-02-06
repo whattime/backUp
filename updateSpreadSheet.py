@@ -193,9 +193,9 @@ if __name__=='__main__':
             #epilog="By Kevin, 26th May 2014")
     parser.add_argument('-s','--study',action='store_true',help='Divide the database by studies')
     parser.add_argument('-d','--database', help='Database location', 
-            default = '/Volumes/promise/nas_BackUp/CCNC_MRI_3T/database/database.xls') #bienseo?: location changed? 
+            default = '/volume/CCNC_MRI/CCNC_MRI_3T/database/database.xls') #bienseo?: location changed? #dahye_bae: corrected the path
     parser.add_argument('-o','--outExcel', help='Excel spreadsheet output location',  
-            default = '/ccnc/MRIspreadsheet/MRI.xls') #bienseo?: location changed?
+            default = '/volume/CCNC_MRI/CCNC_MRI_3T/MRIspreadsheet/MRI.xls') #bienseo?: location changed? #dahye_bae: corrected the path 
 
     args = parser.parse_args()
     print args.study
