@@ -64,7 +64,7 @@ class subject(object):
         self.group = raw_input('Group ? : ')
         self.numberForGroup = maxGroupNum(os.path.join(dbLoc, self.group))
         self.study = raw_input('Study name ? : ')
-        self.timeline = raw_input('baseline or follow up ? eg) baseline, 6mon, 1yfu, 2yfu : ') #bienseo: Solve unicode-error problems
+        self.timeline = raw_input('baseline or follow up ? eg) baseline, 6mfu, 1yfu, 2yfu : ') #bienseo: Solve unicode-error problems
         
         #bienseo: Classify timeline(baseline or follow up)
 
@@ -77,7 +77,6 @@ class subject(object):
             self.targetDir = os.path.join(dbLoc,
                                           self.group,
                                           self.folderName,
-                                          'followUp',
                                           self.timeline)
         else:
             self.folderName = self.group + self.numberForGroup + '_' + self.initial
