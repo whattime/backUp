@@ -19,7 +19,7 @@ import pandas as pd
 import updateSpreadSheet
 import motionExtraction
 import easyFreesurfer
-import freesurferSummary
+import freesurfer_Summary
 import subject as subj
 
 
@@ -90,9 +90,9 @@ def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo,
 
     if freesurfer:
         for subjectClass in subjectClassList:
-            freesurfer.main(subjectClass.targetDir, 
-                            os.path.join(subjectClass.targetDir,'FREESURFER'))
-            freesurfer_summary.main(copiedDir, None,
+            easyFreesurfer.main(subjectClass.targetDir, 
+                                os.path.join(subjectClass.targetDir,'FREESURFER'))
+            freesurfer_Summary.main(copiedDir, None,
                                     "ctx_lh_G_cuneus", True, True, True, True)
     print 'Completed\n'
  
@@ -358,13 +358,13 @@ if __name__ == '__main__':
         '-i', '--inputDirs',
         help='Location of data to back up. Eg) /Volumes/20160420/CHO_KANG_IK_12344321',
         nargs='*',
-        default=False,
+        default=False, 
         )
 
     parser.add_argument(
         '-hd', '--hddLocation',
         help='Location of external drive that contains new data. Eg) /Volumes/160412',
-        default='/Volumes/160412', #bienseo: directory changed in D1
+        default='/external_HDD', #bienseo: directory changed in D1
         )
 
     parser.add_argument(
@@ -376,19 +376,18 @@ if __name__ == '__main__':
     parser.add_argument(
         '-b', '--backupDir',
         help='Location of data storage root. Default : "/Volumes/promise/CCNC_MRI_3T"',
-        default="/Volumes/promise/nas_BackUp/CCNC_MRI_3T", #bienseo: directory changed in D1
+        default="/volume/CCNC_MRI/CCNC_MRI_3T", #bienseo: directory changed in D1
         )
     parser.add_argument(
         '-d', '--database',
         help='Location of database file. Default : "/Volumes/promise/CCNC_MRI_3T/database/database.xls"',
-        default="/Volumes/promise/CCNC_MRI_3T/database/database.xls", #bienseo: directory changed in D1
+        default="/volume/CCNC_MRI/CCNC_MRI_3T/database/database.xls", #bienseo: directory changed in D1
         )
     parser.add_argument(
         '-s', '--spreadsheet',
         help='Location of output excel file. Default : "/ccnc/MRIspreadsheet/MRI.xls"',
-        default="/ccnc/MRIspreadsheet/MRI.xls", #bienseo: directory changed in D1
+        default="/volume/CCNC_MRI/CCNC_MRI_3T/MRIspreadsheet/MRI.xls", #bienseo: directory changed in D1
         )
-
     parser.add_argument(
         '-f', '--freesurfer',
         help='Run freesurfer',
