@@ -1,9 +1,10 @@
-#!/ccnc_bin/venv/bin/python
+#!/ccnc_bin/venv/bin/python -> D1: ananconda
 # -*- coding: utf-8 -*-
 '''
 # Back up data and forms a database from the MRI data
 # Created by Kang Ik Kevin Cho
 # Contributors: Dahye Stella Bae, Eunseo Cho
+# python backUp.py -x -m      (If: changed paths correctly)
 '''
 from __future__ import division
 import re
@@ -19,9 +20,9 @@ import pandas as pd
 import updateSpreadSheet
 import motionExtraction
 import easyFreesurfer
-import freesurfer_Summary
+import freesurfer_Summary # bienseo: not work
 import subject as subj
-
+import dtifit as bien #bienseo dti preprocessing
 
 # scp modules for network dual back up
 import getpass
@@ -81,7 +82,7 @@ def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo,
         print 'Now, running motion_extraction'
         for subjectClass in subjectClassList:
             motionExtraction.main(subjectClass.targetDir, True, True, False)
-
+            bien.dtiFit(os.path.join(subjectClass.targetDir,'DTI'))
     if nasBackup:
         server = '147.47.228.192'
         for subjectClass in subjectClassList:
@@ -92,7 +93,7 @@ def backUp(inputDirs, backUpFrom, USBlogFile, backUpTo,
         for subjectClass in subjectClassList:
             easyFreesurfer.main(subjectClass.targetDir, 
                                 os.path.join(subjectClass.targetDir,'FREESURFER'))
-            freesurfer_Summary.main(copiedDir, None,
+            freesurfer_Summary.main(copiedDir, None,                #bienseo: only use freesurfer.
                                     "ctx_lh_G_cuneus", True, True, True, True)
     print 'Completed\n'
  
@@ -358,13 +359,13 @@ if __name__ == '__main__':
         '-i', '--inputDirs',
         help='Location of data to back up. Eg) /Volumes/20160420/CHO_KANG_IK_12344321',
         nargs='*',
-        default=False, 
+        default=False, #bienseo: directory changed in D1
         )
 
     parser.add_argument(
         '-hd', '--hddLocation',
         help='Location of external drive that contains new data. Eg) /Volumes/160412',
-        default='/external_HDD', #bienseo: directory changed in D1
+        default='/external_HDD', #bienseo: directory changed in D1 /external_HDD
         )
 
     parser.add_argument(
@@ -388,6 +389,7 @@ if __name__ == '__main__':
         help='Location of output excel file. Default : "/ccnc/MRIspreadsheet/MRI.xls"',
         default="/volume/CCNC_MRI/CCNC_MRI_3T/MRIspreadsheet/MRI.xls", #bienseo: directory changed in D1
         )
+
     parser.add_argument(
         '-f', '--freesurfer',
         help='Run freesurfer',
@@ -418,5 +420,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     backUp(args.inputDirs, args.hddLocation, args.USBlogFile, args.backupDir,
-            args.database, args.spreadsheet, args.freesurfer, args.motion,
-            args.executeCopy, args.nasBackup)
+           args.database, args.spreadsheet, args.freesurfer, args.motion,
+           args.executeCopy, args.nasBackup)
