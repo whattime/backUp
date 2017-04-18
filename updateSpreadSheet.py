@@ -196,6 +196,7 @@ if __name__=='__main__':
             default = '/volume/CCNC_MRI/CCNC_MRI_3T/database/database.xls') #bienseo?: location changed? #dahye_bae: corrected the path
     parser.add_argument('-o','--outExcel', help='Excel spreadsheet output location',  
             default = '/volume/CCNC_MRI/CCNC_MRI_3T/MRIspreadsheet/MRI.xls') #bienseo?: location changed? #dahye_bae: corrected the path 
+            
 
     args = parser.parse_args()
     print args.study
